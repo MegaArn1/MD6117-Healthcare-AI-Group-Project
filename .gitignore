@@ -1,0 +1,4 @@
+# Local caches and transient logs
+**/__pycache__/
+*.pyc
+*.log
