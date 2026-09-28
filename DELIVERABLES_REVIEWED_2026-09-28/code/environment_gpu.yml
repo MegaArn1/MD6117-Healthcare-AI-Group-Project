@@ -1,0 +1,19 @@
+name: ml_healthcare_gpu
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy=1.26
+  - pandas=2.1
+  - scikit-learn=1.3
+  - matplotlib=3.8
+  - seaborn=0.13
+  - jupyter
+  - pip:
+      - xgboost>=2.0.0  # GPU support via pip
+      - lightgbm>=4.0.0  # GPU support
+      - shap>=0.44.0
+      - joblib
+      - torch
