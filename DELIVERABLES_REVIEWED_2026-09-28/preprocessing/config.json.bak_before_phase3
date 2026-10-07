@@ -1,0 +1,35 @@
+{
+  "task": "Predict final In-hospital_death at the 48-hour landmark",
+  "time_rule_primary": "0 <= elapsed_minutes < 2880",
+  "time_rule_sensitivity": "0 <= elapsed_minutes <= 2880 for affected stays only",
+  "random_seed": 20260907,
+  "split_ratios": {
+    "train": 0.7,
+    "validation": 0.15,
+    "test": 0.15
+  },
+  "windows": [
+    {"name": "0_24h", "start_minute": 0, "end_minute": 1440},
+    {"name": "24_48h", "start_minute": 1440, "end_minute": 2880},
+    {"name": "0_48h", "start_minute": 0, "end_minute": 2880}
+  ],
+  "static_parameters": ["Age", "Gender", "Height", "ICUType", "Weight"],
+  "dynamic_parameters": [
+    "Albumin", "ALP", "ALT", "AST", "Bilirubin", "BUN", "Cholesterol",
+    "Creatinine", "DiasABP", "FiO2", "GCS", "Glucose", "HCO3", "HCT",
+    "HR", "K", "Lactate", "MAP", "MechVent", "Mg", "Na", "NIDiasABP",
+    "NIMAP", "NISysABP", "PaCO2", "PaO2", "pH", "Platelets", "RespRate",
+    "SaO2", "SysABP", "Temp", "TroponinI", "TroponinT", "Urine", "WBC",
+    "Weight"
+  ],
+  "summary_statistics": [
+    "measured", "count", "first", "last", "min", "max", "mean", "median",
+    "std", "slope_per_hour", "delta", "time_span_hours"
+  ],
+  "missing_sentinel": -1,
+  "imputation": "Training-split median; all-missing-in-train columns use 0 and are flagged",
+  "scaling": "None; model-specific scaling must be fit inside training data later",
+  "duplicate_policy": "Audit exact duplicates/conflicts; collapse same-time dynamic continuous values by median, MechVent by maximum, and Urine by sum before longitudinal summaries",
+  "outlier_policy": "No clinical clipping or deletion; retain finite values and report ranges",
+  "gzip_compresslevel": 6
+}
