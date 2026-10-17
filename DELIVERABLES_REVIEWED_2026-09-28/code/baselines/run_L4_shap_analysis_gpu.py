@@ -13,21 +13,19 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import xgboost as xgb
-import lightgbm as lgb
-from catboost import CatBoostClassifier
 import shap
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 
 print("="*60)
 print("L4 SHAP Feature Importance Analysis")
 print("="*60)
 
-RESULTS_DIR = Path(__file__).parent.parent / 'results'
-MODELS_DIR = Path(__file__).parent.parent / 'models'
-FIGURES_DIR = Path(__file__).parent.parent / 'results' / 'figures'
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
+MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
+FIGURES_DIR = Path(__file__).resolve().parents[2] / "results" / 'figures'
 FIGURES_DIR.mkdir(exist_ok=True)
 
 # Load model selection
@@ -53,15 +51,24 @@ if selected_model == 'xgboost':
     model = xgb.XGBClassifier()
     model.load_model(str(MODELS_DIR / 'L4_xgboost_best.json'))
 elif selected_model == 'catboost':
+    from catboost import CatBoostClassifier
     model = CatBoostClassifier()
     model.load_model(str(MODELS_DIR / 'L4_catboost_best.cbm'))
 else:  # lightgbm
+    import lightgbm as lgb
     model = lgb.Booster(model_file=str(MODELS_DIR / 'L4_lightgbm_best.txt'))
 
 # Compute SHAP values on test set
 print("\n3. Computing SHAP values (may take 5-10 min)...")
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(X_test)
+# Native XGBoost contributions avoid TreeExplainer parsing issues with XGBoost 3.x.
+if selected_model == 'xgboost':
+    shap_values = model.get_booster().predict(xgb.DMatrix(X_test), pred_contribs=True)[:, :-1]
+elif selected_model == 'catboost':
+    from catboost import Pool
+    shap_values = model.get_feature_importance(Pool(X_test), type='ShapValues')[:, :-1]
+else:
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_test)
 # For binary classifiers that return a list (e.g. LightGBM), take class-1 values
 if isinstance(shap_values, list):
     shap_values = shap_values[1]
@@ -182,7 +189,7 @@ for _, row in top_20.iterrows():
 
 results = {
     'selected_model': selected_model,
-    'shap_computation': 'TreeExplainer on test set',
+    'shap_computation': 'Native TreeSHAP on test set (XGBoost/CatBoost); TreeExplainer for optional LightGBM',
     'top_20_features': top_20_list,
     'l3_overlap': {
         'l3_features_in_top_20': int(l3_in_top_20),

@@ -19,11 +19,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 
-R = Path(__file__).parent.parent / 'results'
-M = Path(__file__).parent.parent / 'models'
+R = Path(__file__).resolve().parents[2] / "results"
+M = Path(__file__).resolve().parents[2] / "models"
 FIG = R / 'figures'; FIG.mkdir(exist_ok=True)
 
 print("="*70)
@@ -41,9 +41,9 @@ model = xgb.XGBClassifier()
 model.load_model(str(M / 'L4_xgboost_best.json'))
 p_test = model.predict_proba(X_test)[:, 1]
 
-# SHAP explainer (TreeExplainer for XGBoost)
-explainer = shap.TreeExplainer(model)
-shap_values = explainer.shap_values(X_test)
+# Native exact TreeSHAP; last column is the baseline margin (not a feature).
+contributions = model.get_booster().predict(xgb.DMatrix(X_test), pred_contribs=True)
+shap_values = contributions[:, :-1]
 
 print("\n1. Selecting representative cases")
 # TP: high prob, died
@@ -74,7 +74,7 @@ for label, idx in [('TP_high_risk_died', tp_i), ('FP_high_risk_survived', fp_i),
     
     # SHAP waterfall plot
     shap_exp = shap.Explanation(values=shap_values[idx], 
-                                base_values=explainer.expected_value,
+                                base_values=float(contributions[idx, -1]),
                                 data=X_test[idx],
                                 feature_names=feat)
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -85,7 +85,7 @@ for label, idx in [('TP_high_risk_died', tp_i), ('FP_high_risk_survived', fp_i),
     fig_path = FIG / f'L4_shap_waterfall_{label}.png'
     plt.savefig(fig_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"      Saved -> {fig_path.relative_to(Path.cwd())}")
+    print(f"      Saved -> {fig_path.relative_to(Path(__file__).resolve().parents[2])}")
     
     # Top 10 SHAP contributors for JSON
     top10_idx = np.argsort(-np.abs(shap_values[idx]))[:10]
@@ -109,5 +109,5 @@ output = {
               '(high risk, survived), one false negative (low risk, died).')
 }
 json.dump(output, open(R / 'L4_case_examples.json', 'w'), indent=2)
-print(f"\nSaved -> {R.relative_to(Path.cwd())}/L4_case_examples.json")
+print(f"\nSaved -> {R.relative_to(Path(__file__).resolve().parents[2])}/L4_case_examples.json")
 print("="*70)

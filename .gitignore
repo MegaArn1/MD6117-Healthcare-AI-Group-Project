@@ -1,4 +1,10 @@
-# Local caches and transient logs
+# Caches and generated local files
 **/__pycache__/
-*.pyc
+*.py[cod]
 *.log
+**/.venv/
+**/.ipynb_checkpoints/
+**/.pytest_cache/
+**/artifacts/
+.env
+.env.*

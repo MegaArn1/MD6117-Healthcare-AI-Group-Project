@@ -26,11 +26,11 @@ from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import get_split
 from metrics import compute_metrics, bootstrap_ci, find_threshold_for_recall, min_se_ppv
 
-R = Path(__file__).parent.parent / 'results'
+R = Path(__file__).resolve().parents[2] / "results"
 
 L3_ORIGINAL = ['bun__0_48h__max', 'static_age_years', 'gcs__0_48h__min', 'urine__0_48h__min',
                'lactate__0_48h__max', 'platelets__0_48h__min', 'creatinine__0_48h__max',

@@ -16,11 +16,11 @@ import numpy as np
 from pathlib import Path
 import xgboost as xgb
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics
 
-R = Path(__file__).parent.parent / 'results'
+R = Path(__file__).resolve().parents[2] / "results"
 labels, X, _ = load_data()
 df = labels.merge(X, on='RecordID', validate='one_to_one')
 feat = [c for c in X.columns if c != 'RecordID']

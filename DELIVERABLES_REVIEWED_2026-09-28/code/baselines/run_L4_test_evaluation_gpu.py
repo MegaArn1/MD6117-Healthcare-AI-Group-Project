@@ -4,7 +4,7 @@ L4 Test Evaluation with GPU
 Evaluates selected model on test set with:
 - Bootstrap 95% CI (1,000 resamples)
 - Threshold selection at recall≈0.80 on validation
-- Statistical significance test vs L3
+- Descriptive confidence-interval comparison vs L3
 - Comparison to all prior baselines
 """
 import sys
@@ -13,10 +13,8 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import xgboost as xgb
-import lightgbm as lgb
-from catboost import CatBoostClassifier
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics, bootstrap_ci, find_threshold_for_recall
 
@@ -24,8 +22,8 @@ print("="*60)
 print("L4 Test Evaluation")
 print("="*60)
 
-RESULTS_DIR = Path(__file__).parent.parent / 'results'
-MODELS_DIR = Path(__file__).parent.parent / 'models'
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
+MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
 
 # Load model selection
 with open(RESULTS_DIR / 'L4_model_selection.json') as f:
@@ -59,11 +57,13 @@ if selected_model == 'xgboost':
     y_val_proba  = model.predict_proba(X_val)[:, 1]
     y_test_proba = model.predict_proba(X_test)[:, 1]
 elif selected_model == 'catboost':
+    from catboost import CatBoostClassifier
     model = CatBoostClassifier()
     model.load_model(str(MODELS_DIR / 'L4_catboost_best.cbm'))
     y_val_proba  = model.predict_proba(X_val)[:, 1]
     y_test_proba = model.predict_proba(X_test)[:, 1]
 else:  # lightgbm
+    import lightgbm as lgb
     model = lgb.Booster(model_file=str(MODELS_DIR / 'L4_lightgbm_best.txt'))
     y_val_proba  = model.predict(X_val)
     y_test_proba = model.predict(X_test)
@@ -121,11 +121,11 @@ print(f"   L3 AUROC: {l3_auroc:.4f} [{l3_ci_low:.4f}, {l3_ci_high:.4f}]")
 print(f"   L4 AUROC: {auroc_point:.4f} [{l4_ci_low:.4f}, {l4_ci_high:.4f}]")
 print(f"   Improvement: +{improvement_absolute:.4f} ({improvement_relative_pct:+.1f}%)")
 print(f"   CI overlap: {'YES' if ci_overlap else 'NO'}")
-print(f"   Statistically significant: {'NO' if ci_overlap else 'YES'}")
+print('   CI overlap is descriptive; no paired significance test was performed.')
 
-# Check literature target
+# Check the historical planning target (not an external benchmark comparison)
 literature_target_achieved = auroc_point >= 0.83
-print(f"\n7. Literature target (AUROC 0.83-0.86): {'✓ ACHIEVED' if literature_target_achieved else '✗ NOT ACHIEVED'}")
+print(f"\n7. Historical planning target (AUROC 0.83-0.86; not a literature comparison): {'✓ ACHIEVED' if literature_target_achieved else '✗ NOT ACHIEVED'}")
 
 # Save results
 results = {
@@ -156,10 +156,11 @@ results = {
         'improvement_absolute': float(improvement_absolute),
         'improvement_relative_pct': float(improvement_relative_pct),
         'ci_overlap': bool(ci_overlap),
-        'statistically_significant': not bool(ci_overlap)
+        'comparison_method': 'descriptive marginal CI overlap; no paired hypothesis test'
     },
     'literature_target_achieved': bool(literature_target_achieved),
-    'literature_target_range': [0.83, 0.86]
+    'literature_target_range': [0.83, 0.86],
+    '_legacy_target_note': 'Legacy field names denote the original planning target only; no verified literature superiority claim.'
 }
 
 output_file = RESULTS_DIR / 'L4_test_evaluation.json'

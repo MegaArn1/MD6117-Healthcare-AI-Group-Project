@@ -4,21 +4,23 @@
 **Task**: In-hospital death prediction (任务 1 of the group project)
 **Data**: PhysioNet/CinC Challenge 2012, all 12,000 stays pooled, 11,833 after exclusions
 **Date**: 2026-09-25
-**Scope**: This report covers the modelling half of task 1. Preprocessing was done by a teammate and is described in `../preprocessing/README.md`. Task 2 (prolonged length of stay) is a separate deliverable.
+**Scope**: In-hospital mortality only; this is the reviewed 11,833-stay XGBoost experiment. Preprocessing is in `preprocessing/README.md`. The later combined presentation uses different task numbers and a different mortality experiment.
 
-Every number in this report is read from a file under `results/`. The file is named at the end of each table.
+**Repository revision (2026-10-17):** Executable analysis is in `In_Hospital_Death.ipynb`; AI disclosure is in `GAI_DECLARATION.md`. Historical result values are preserved; interpretation and reproduction instructions below have been corrected.
+
+Model results come from the named files under `results/`. The GCS univariate screen is reproduced in `In_Hospital_Death.ipynb`; external challenge context is referenced separately in `REFERENCES.md`.
 
 ---
 
 ## 1. Summary
 
-A gradient-boosted tree model (XGBoost, 1,474 features) predicts in-hospital death from the first 48 hours of an ICU stay with **test AUROC 0.885 [0.865, 0.903]** and **AUPRC 0.591 [0.535, 0.649]** (n = 1,775, prevalence 0.144). The bedside scores on the same patients reach AUROC 0.640 (SAPS-I) and 0.623 (SOFA). An eight-feature logistic regression with well-chosen summary statistics reaches 0.821, so most of the distance from the bedside scores is closed by feature engineering rather than by model complexity; the full GBDT adds a further 0.064, which is still statistically separated.
+A gradient-boosted tree model (XGBoost, 1,474 features) predicts in-hospital death from the first 48 hours of an ICU stay with **test AUROC 0.885 [0.865, 0.903]** and **AUPRC 0.591 [0.535, 0.649]** (n = 1,775, prevalence 0.144). The bedside scores on the same patients reach AUROC 0.640 (SAPS-I) and 0.623 (SOFA). An eight-feature logistic regression with well-chosen summary statistics reaches 0.821, so most of the distance from the bedside scores is closed by feature engineering rather than by model complexity; the full GBDT adds a further 0.064, with non-overlapping marginal bootstrap intervals (a descriptive comparison, not a paired test).
 
 Three findings carry the discussion:
 
-1. **Feature breadth, not nonlinearity, does most of the work.** Fifty features recover 98.6% of the full model's validation AUROC; at eight features a tree model and a linear model are within noise of each other.
-2. **Which summary statistic you take matters as much as which variable.** The last recorded GCS in the window (AUROC 0.757 alone on train+validation) beats the minimum GCS (0.589) by a wide margin, because minimum GCS saturates on sedation and procedures. Swapping that one statistic in the logistic model raised test AUROC from 0.742 to 0.821.
-3. **The model is well calibrated and generalises across ICU types.** Brier 0.086; subgroup AUROC ranges 0.837 (Medical) to 0.955 (Cardiac surgery recovery), with no subgroup below 0.83.
+1. **Compact summaries carry substantial predictive information.** Fifty features reach validation AUROC 0.857 versus 0.869 for the full ablation model; the eight-feature tree and revised logistic validation estimates are similar. Feature set and model family change together, so this does not isolate an algorithm effect.
+2. **Which summary statistic you take matters as much as which variable.** The last recorded GCS in the window (AUROC 0.757 alone on train+validation) beats the minimum GCS (0.589) by a wide margin, with sedation and procedures as possible but unverified explanations. Swapping GCS min for last and urine min for total together raised logistic test AUROC from 0.742 to 0.821.
+3. **The model has useful internal discrimination across ICU types, with imperfect calibration.** Brier 0.086; subgroup AUROC ranges 0.837 (Medical) to 0.955 (Cardiac surgery recovery), with no subgroup below 0.83.
 
 At the clinically chosen operating point (validation recall 0.80), the model flags 29% of patients and 38.7% of those flagged die, against a base rate of 14.4%.
 
@@ -35,7 +37,7 @@ At the clinically chosen operating point (validation recall 0.80), the model fla
 | Test | 1,775 | 256 | 0.1442 |
 | Total | 11,833 | 1,707 | 0.1443 |
 
-Splits are 70/15/15, stratified by outcome, seed 20260907, fixed before any modelling. 167 stays with negative length of stay were excluded upstream; all were survivors, which is why prevalence is 0.1443 and not the 0.142 quoted in the original plan. Source: `../experiment/data/split_summary.csv`.
+Splits are 70/15/15, stratified by outcome, seed 20260907, fixed before any modelling. 167 stays with negative length of stay were excluded upstream; all were survivors, which is why prevalence is 0.1443 and not the 0.142 quoted in the original plan. Source: `data/split_summary.csv`.
 
 ### 2.2 Features
 
@@ -44,7 +46,7 @@ Splits are 70/15/15, stratified by outcome, seed 20260907, fixed before any mode
 ### 2.3 Evaluation rules
 
 - **Test set scored once per declared model.** All hyperparameter search, model selection and threshold choice used train + validation only.
-- **Primary metric AUPRC, secondary AUROC**, both with 1,000-resample stratified bootstrap 95% CIs from one shared `metrics.py`.
+- **Reporting: AUPRC and AUROC**. Historical hyperparameter search and model selection optimised AUROC; AUPRC is clinically relevant at this prevalence but was not the original selection objective. Both carry 1,000-resample stratified bootstrap 95% CIs from one shared `metrics.py`.
 - **Operating point**: threshold chosen on validation for recall ≈ 0.80, then applied to test. Missing a death costs more than an unnecessary review.
 - **min(Se, PPV)** reported for comparability with the 2012 challenge.
 - **Bedside scores** are evaluated on the patients for whom they were computable (SAPS-I n = 1,728, SOFA n = 1,733). 47 and 42 test patients respectively have no score; those patients have roughly twice the average mortality, so treating the sentinel as a low score would invert them. The model is also scored on those same subsets for the head-to-head.
@@ -54,26 +56,26 @@ Splits are 70/15/15, stratified by outcome, seed 20260907, fixed before any mode
 
 ## 3. Baseline ladder
 
-**Table 1. Test-set performance, all rungs.** Se/PPV/Sp at the validation recall-0.80 threshold. min(Se, PPV) for L0/L1 uses the same threshold rule and is reported for completeness only.
+**Table 1. Test-set performance, all rungs.** Se/PPV/Sp at the validation recall-0.80 threshold. Threshold metrics are omitted for L0/L1: the old gap-fill used a different random draw sequence and an inconsistent GCS risk direction, so it must not be combined with their ranking metrics.
 
 | Rung | Model | Features | AUROC [95% CI] | AUPRC [95% CI] | Se | PPV | Sp | min(Se,PPV) | n |
 |---|---|---|---|---|---|---|---|---|---|
-| L0 | Random | 0 | 0.474 [0.436, 0.513] | 0.135 [0.124, 0.151] | — | — | — | 0.147 | 1,775 |
-| L1 | Age | 1 | 0.627 [0.590, 0.667] | 0.224 [0.196, 0.265] | — | — | — | 0.164 | 1,775 |
-| L1 | GCS min | 1 | 0.553 [0.517, 0.586] | 0.155 [0.143, 0.168] | — | — | — | 0.144 | 1,775 |
-| L1 | BUN max | 1 | 0.675 [0.635, 0.710] | 0.265 [0.231, 0.310] | — | — | — | 0.185 | 1,775 |
+| L0 | Random | 0 | 0.474 [0.436, 0.513] | 0.135 [0.124, 0.151] | — | — | — | — | 1,775 |
+| L1 | Age | 1 | 0.627 [0.590, 0.667] | 0.224 [0.196, 0.265] | — | — | — | — | 1,775 |
+| L1 | GCS min | 1 | 0.553 [0.517, 0.586] | 0.155 [0.143, 0.168] | — | — | — | — | 1,775 |
+| L1 | BUN max | 1 | 0.675 [0.635, 0.710] | 0.265 [0.231, 0.310] | — | — | — | — | 1,775 |
 | L2 | SAPS-I | score | 0.640 | 0.213 | 0.819 | 0.171 | 0.348 | 0.171 | 1,728 |
 | L2 | SOFA | score | 0.623 | 0.253 | 0.820 | 0.171 | 0.345 | 0.171 | 1,733 |
 | L3 | Logistic, 8 features (clinical-prior statistics) | 8 | 0.742 [0.708, 0.774] | 0.395 [0.343, 0.455] | 0.797 | 0.220 | 0.524 | 0.220 | 1,775 |
 | **L3-revised** | **Logistic, 8 features (GCS-last, urine-total)** | 8 | **0.821 [0.793, 0.846]** | **0.500 [0.445, 0.556]** | 0.840 | 0.297 | 0.666 | 0.297 | 1,775 |
 | **L4** | **XGBoost, 1,474 features** | 1,474 | **0.885 [0.865, 0.903]** | **0.591 [0.535, 0.649]** | 0.785 | 0.387 | 0.791 | 0.387 | 1,775 |
 
-Sources: `L0_random_baseline.json`, `L1_*.json`, `L2_clinical_scores_analysis.json`, `L3_threshold_analysis.json`, `L3_logistic_regression_8features.json`, `L3_revised_test_evaluation.json`, `L4_test_evaluation.json`, `L4_calibration_and_subgroup.json` (L0/L1 min(Se,PPV)).
+Sources: `L0_random_baseline.json`, `L1_*.json`, `L2_clinical_scores_analysis.json`, `L3_threshold_analysis.json`, `L3_logistic_regression_8features.json`, `L3_revised_test_evaluation.json`, `L4_test_evaluation.json`. Historical threshold gap-fill caveats are recorded in `AI_USE_LOG.md`.
 
 **Reading the ladder.**
 - A single lab value (BUN max, 0.675) already matches or beats both bedside scores. The scores were designed for population stratification, not individual prediction, and each takes only a few dozen distinct values across 1,775 patients.
 - L3 and L3-revised use the same eight parameters and the same recipe (L2 logistic, C = 1, balanced weights). They differ only in two summary statistics (§5). That swap is worth 0.079 AUROC.
-- L4 over L3-revised: +0.064 AUROC, +0.091 AUPRC, CIs disjoint.
+- L4 over L3-revised: +0.064 AUROC, +0.091 AUPRC; marginal CIs do not overlap. No paired significance test was performed.
 
 ### 3.1 Head-to-head with the bedside scores on their own patients
 
@@ -107,9 +109,7 @@ XGBoost selected on validation AUROC. Chosen configuration: `max_depth=7, learni
 | CatBoost | 224 (early-stopped) | 0.957 | 0.860 | 0.097 |
 | L3 logistic (reference) | — | 0.733 | 0.722 | 0.012 |
 
-XGBoost fits the training set exactly. This is a capacity property of boosted trees on 8,283 rows, not a defect: the model performs consistently on two independent hold-outs (validation 0.866, test 0.885, difference within the ±0.02 CI half-width), and the train–validation gap is similar for CatBoost, which does not interpolate. An ablation confirmed that adding early stopping to XGBoost's final fit stops at 160 rounds and changes validation AUROC by 0.0002. Sources: `L4_overfit_comparison.json`, `L4_xgboost_es_ablation.json`.
-
-The right wording for the report is: *the model has enough capacity to fit the training set exactly and performs consistently on two independent held-out sets.* "Overfitting" would imply degraded generalisation, which was not observed.
+XGBoost nearly perfectly discriminates the training rows and has a substantial train–validation AUROC gap. Validation 0.866 and test 0.885 provide internal held-out evidence, but do not rule out overfitting, selection optimism, or failure at another site. The saved early-stopping ablation changes validation AUROC by approximately 0.0002. These are descriptive checks on one cohort and split. Sources: `L4_overfit_comparison.json`, `L4_xgboost_es_ablation.json`.
 
 ### 4.3 How many features are needed
 
@@ -125,11 +125,11 @@ Features ranked by mean |SHAP| on the **training** set, then XGBoost refit on th
 | 500 | 0.867 | 0.517 | 99.8% |
 | 1,474 | 0.869 | 0.532 | 100% |
 
-Two things follow. Fifty features carry nearly all of the signal, so a compact model is the natural deployment candidate. And XGBoost on its own top eight (0.813) is within noise of the eight-feature logistic model (L3-revised, validation 0.808): at that scale the trees add essentially nothing over a linear fit, so the L3→L4 gap is bought with breadth. Source: `L4_feature_count_ablation.json`.
+Two things follow. Fifty features carry nearly all of the signal, so a compact model is the natural deployment candidate. And XGBoost on its own top eight (0.813) is within noise of the eight-feature logistic model (L3-revised, validation 0.808): at that scale the trees add essentially nothing over a linear fit, suggesting feature breadth contributes, although a matched-feature experiment would be needed to isolate model-family effects. Source: `L4_feature_count_ablation.json`.
 
 ### 4.4 Calibration
 
-Brier score **0.086** on test. The ten-bin reliability curve tracks the diagonal up to about 0.35 predicted probability and then falls below it: patients predicted at 0.65 die at a rate of 0.54, and patients predicted at 0.95 die at 0.83. The model is slightly over-confident at the high end, which is expected with `scale_pos_weight` inflating positive-class scores. Ranking (AUROC) is unaffected; if calibrated probabilities are needed for communication with families, isotonic or Platt scaling fitted on validation would correct it. Source: `L4_calibration_and_subgroup.json`; figure `results/figures/L4_calibration_curve.png`.
+Brier score **0.086** on test. The ten-bin reliability curve tracks the diagonal up to about 0.35 predicted probability and then falls below it: patients predicted at 0.65 die at a rate of 0.54, and patients predicted at 0.95 die at 0.83. The model is slightly over-confident at the high end, which may be related to class weighting and the small numbers in high-risk bins. Ranking (AUROC) is unaffected; if calibrated probabilities are needed for communication with families, validation-fitted isotonic or Platt scaling would need separate evaluation; correction is not guaranteed. Source: `L4_calibration_and_subgroup.json`; figure `results/figures/L4_calibration_curve.png`.
 
 ### 4.5 Subgroups by ICU type
 
@@ -141,7 +141,7 @@ Brier score **0.086** on test. The ten-bin reliability curve tracks the diagonal
 | Surgical | 497 | 80 | 0.161 | 0.897 [0.860, 0.929] |
 | All | 1,775 | 256 | 0.144 | 0.885 [0.865, 0.903] |
 
-No subgroup drops below 0.83. The Medical ICU, the largest and most heterogeneous, is hardest; the cardiac-surgery unit, with only 19 deaths, is easiest and has the widest CI. `static_icutype_2` is the 11th most important SHAP feature, so the model uses unit type directly. Source: `L4_subgroup_by_icutype.json`.
+No subgroup drops below 0.83. The Medical ICU, the largest and most heterogeneous, is hardest; the cardiac-surgery unit, with only 19 deaths, has the highest point estimate but only 19 deaths. Coronary has a wider AUROC CI; event counts and interval widths should both be considered. `static_icutype_2` is the 11th most important SHAP feature, so the model uses unit type directly. Source: `L4_subgroup_by_icutype.json`.
 
 ---
 
@@ -170,7 +170,7 @@ Leakage was checked: record-length proxies (`time_span_hours`, parameter counts)
 
 ### 5.2 Last GCS versus minimum GCS
 
-The original L3 used `gcs__0_48h__min` because the SOFA neurological component uses the worst GCS in the window. Single-variable screen on train + validation (test untouched):
+The original L3 used `gcs__0_48h__min` because the SOFA neurological component uses the worst GCS in the window. Single-variable screen on observed train + validation rows (test untouched; n=9,907 for most GCS summaries, 9,906 for slope). The main notebook also shows the separate train-median-imputed estimates over all 10,058 development stays:
 
 | GCS statistic, 0–48 h | AUROC |
 |---|---|
@@ -181,29 +181,27 @@ The original L3 used `gcs__0_48h__min` because the SOFA neurological component u
 | slope / delta | 0.666 / 0.665 |
 | **min** | **0.589** |
 
-Almost every ICU patient records at least one low GCS in 48 hours from sedation, intubation or a procedure, so `min` saturates near the floor and cannot separate treatment-induced lows from prognostic ones. `last` reads consciousness after those effects have worn off. Refitting the L3 recipe with `min → last` and `urine min → urine total` raised validation AUROC from 0.722 to 0.808; that feature set was then declared as L3-revised and scored on test once (0.821). Source: `L3_gcs_statistic_ablation.json`, `L3_revised_test_evaluation.json`.
+GCS minimum is less discriminative in this cohort. Sedation, intubation and procedures could contribute to low minima; medication information is unavailable, so this mechanism and whether its effects have worn off by the last measurement cannot be confirmed. Refitting the L3 recipe with `min → last` and `urine min → urine total` raised validation AUROC from 0.722 to 0.808; that feature set was then declared as L3-revised and scored on test once (0.821). Source: `L3_gcs_statistic_ablation.json`, `L3_revised_test_evaluation.json`.
 
-This is the project's clearest example of the "measurement behaviour versus physiology" question the plan asked about: the clinical prior identified the right variable and the wrong summary of it.
+The result illustrates how summary-statistic choice changes predictive performance; physiology and documentation effects cannot be separated causally here.
 
 ### 5.3 Three patients
 
 SHAP waterfalls on the test set for one correct high-risk call, one false alarm, and one missed death. Figures in `results/figures/L4_shap_waterfall_*.png`; contributions in `L4_case_examples.json`.
 
-**Correct high-risk call (RecordID 103032, predicted 0.997, died).** Last GCS 7 (+0.91 log-odds), last lactate 11.6 mmol/L (+0.33), second-day urine only 414 mL (+0.32), platelets 25 (+0.23), mean systolic BP 97 (+0.21). Every major organ system is contributing in the same direction; the model has no doubt and neither would a clinician.
+**Correct high-risk call (RecordID 103032, predicted 0.997, died).** Last GCS 7 (+0.91 log-odds), last lactate 11.6 mmol/L (+0.33), second-day urine only 414 mL (+0.32), platelets 25 (+0.23), mean systolic BP 97 (+0.21). Several measured organ-system signals contribute toward higher model risk; this does not establish clinical certainty.
 
-**False alarm (RecordID 100571, predicted 0.976, survived).** Last GCS 6 (+1.74), age 80 (+0.23), lactate 3.0 (+0.23). Urine output 5.5 L pulls the other way (−0.17) but cannot offset the GCS. A deeply sedated or post-ictal 80-year-old with otherwise adequate perfusion looks like this; the model is reading depressed consciousness as prognostic when here it probably was not. This is the failure mode of the GCS-last feature and the case for pairing it with a less timing-dependent summary such as the median.
+**False alarm (RecordID 100571, predicted 0.976, survived).** Last GCS 6 (+1.74), age 80 (+0.23), lactate 3.0 (+0.23). Urine output 5.5 L pulls the other way (−0.17) but cannot offset the GCS. Sedation or a post-ictal state are possible explanations, not verified patient facts; the model is reading depressed consciousness as prognostic although the actual reason for this patient’s survival is not established. This is the failure mode of the GCS-last feature and the case for pairing it with a less timing-dependent summary such as the median.
 
-**Missed death (RecordID 102169, predicted 0.004, died).** Last GCS 8 pushes risk up (+0.48), but 7.2 L urine, age 53, a falling white count, lactate 0.6 and a short ventilation span all push it down, and the remaining 1,460 features contribute a further −4.5 log-odds. On the numbers available at 48 h this patient looked like a recovering one. Deaths of this kind, with normal perfusion markers, are the residual that no 48-hour model will catch.
+**Missed death (RecordID 102169, predicted 0.004, died).** Last GCS 8 pushes risk up (+0.48), but 7.2 L urine, age 53, a falling white count, lactate 0.6 and a short ventilation span all push it down, and the remaining 1,460 features contribute a further −4.5 log-odds. On the numbers available at 48 h this patient looked like a recovering one. Later deterioration is a possible explanation, but its timing and cause are unavailable; this case does not establish an unavoidable modelling limit.
 
 ---
 
-## 6. Comparison with the literature
+## 6. Challenge context and limits of comparison
 
-The 2012 challenge released the same 12,000 stays as set A (4,000, outcomes public) and sets B and C (outcomes withheld). Its official metric was min(Se, PPV); the SAPS-I reference scored 0.313 and the winning entry 0.535 on sets B + C. Post-challenge AUROC reports on this data, most of them training on set A only, cluster at 0.84–0.85 (CinC 2014 preprocessing study 0.848; a 2026 XGBoost baseline 0.840 / AUPRC 0.456).
+The PhysioNet/CinC 2012 challenge used a different data partition and min(Se, PPV) as its event-1 score. Its SAPS-I reference scored 0.313 and the best entry 0.535 on the official evaluation. Dataset and organiser references are listed in `REFERENCES.md`. Our pooled and re-split cohort is not a direct benchmark comparison; unsupported specific literature AUROC claims from earlier notes are not used here.
 
-Our L4 sits at 0.885. The two most likely reasons are that we train on 8,283 rows (all three sets pooled and re-split) rather than 4,000, and that we use 1,474 engineered features with window-level trends. Those are legitimate differences, but they also mean our number is not directly comparable to the challenge-era results, and the report should say "consistent with or above published results on this dataset" rather than "beats the literature".
-
-On the challenge metric, our test value at the recall-0.80 threshold is 0.387. A validation-only sweep finds the metric-optimal threshold at 0.345, giving min(Se, PPV) = 0.518 with Se 0.52 and PPV 0.52. That would have been competitive with the 2012 winner, but it halves sensitivity, which is the trade the project's clinical framing rejects. The test set was not re-scored at that threshold. Source: `L4_challenge_metric_validation.json`.
+Our test min(Se, PPV) is 0.387 at the validation recall-0.80 operating point. A separate validation-only sweep selects threshold 0.345 with min(Se, PPV) approximately 0.518 (Se and PPV about 0.52). This illustrates a sensitivity/precision trade-off, not a claim to beat the challenge. The test set was not re-thresholded for that objective. Source: `L4_challenge_metric_validation.json`.
 
 ---
 
@@ -233,12 +231,6 @@ The model flags 519 patients (29%). Of those, 201 die: a 38.7% event rate agains
 
 ## 9. Reproducing this work
 
-```
-code/
-├── src/data.py, src/metrics.py          shared loader and metrics
-└── baselines/run_L*.py                  one script per rung and per analysis
-models/L4_xgboost_best.json, L4_catboost_best.cbm
-results/*.json, results/figures/*.png
-```
+See `README.md` for the portable environment and commands. Run `python tools/execute_notebook.py` from this package with Python 3.11 and `requirements.txt` installed. The notebook refits both fixed L3 recipes, loads `models/L4_xgboost_best.json`, verifies the reviewed metrics, and writes new tables/figures/pipelines into `artifacts/notebook/`.
 
-Training scripts (`run_L4_xgboost_gpu.py`, `run_L4_catboost_gpu.py`) need a GPU and took 13 and 89 minutes. Everything else runs on CPU in under three minutes from the saved models. Environment: `code/environment_gpu.yml`; Python 3.11, xgboost 3.2, catboost 1.2, scikit-learn 1.2, pandas 2.1, numpy 1.26. Data: `../experiment/data/` (frozen snapshot, SHA-256 manifest included).
+Modules are `code/data.py` and `code/metrics.py`; historical entry points are under `code/baselines/`. All paths resolve inside this package. The data snapshot is `data/` and is checked against its SHA-256 manifest. Optional full training and raw preprocessing are documented separately; default execution does neither. The raw cleaning-policy discrepancy and unavailable historical GAI history are disclosed in `data_snapshot/DATA_README.md` and `GAI_DECLARATION.md`.

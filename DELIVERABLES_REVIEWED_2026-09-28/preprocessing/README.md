@@ -8,18 +8,33 @@
 
 `Time=48:00` 与 README 声明的 `47:59` 上限冲突，因此主版本排除，并为受影响患者单独输出含边界记录的敏感性版本。
 
-## 一键运行
+## 运行与数据位置
 
-在项目根目录运行：
+主建模流程直接使用包内 `data/`，不需要重跑原始预处理。先按根目录 README 安装 `requirements.txt`。
 
-```powershell
-& 'C:\Users\在九华山升旗的外交官\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' preprocessing\mortality_preprocess.py
-& 'C:\Users\在九华山升旗的外交官\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m unittest discover -s preprocessing\tests -v
-& 'C:\Users\在九华山升旗的外交官\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' preprocessing\verify_outputs.py
-& 'C:\Users\在九华山升旗的外交官\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' preprocessing\validate_phase3_outputs.py
+如需重建原始预处理，在本交付包根目录准备课程提供的以下文件（原始数据未随仓库发布）：
+
+```text
+release/README.md
+release/outcomes.csv
+release/icu_records/<RecordID>.csv
 ```
 
-规则集中在 `config.json`。原始 `release/` 不会被修改。
+然后从本交付包根目录运行：
+
+```bash
+python preprocessing/mortality_preprocess.py
+python -m unittest discover -s preprocessing/tests -v
+python preprocessing/verify_outputs.py
+python preprocessing/validate_phase3_outputs.py
+python code/make_labels_and_baselines.py
+```
+
+前四条读取/写入 `preprocessing/outputs/`；最后一条重新连接 `data/labels_and_splits.csv` 与原始结局文件，覆盖 `data/labels_and_baselines.csv`，**因此只在有意重建并另存原冻结快照时运行**。不要自动把重建产物复制进 `data/`。原始数据和清洗版本变化应作为新实验单独验收。
+
+`mortality_data_preprocessing.ipynb` 是已执行的轻量 QA 笔记本，可基于现有 `preprocessing/outputs/` 重跑；它不是建模入口。主入口为根目录 `In_Hospital_Death.ipynb`。
+
+**历史来源限制：** `config.json` 和冻结 summary 的 outlier policy 写作保留有限值，但实际随包脚本启用了生理范围检查及 pH/身高修正。此处如实保留两者，不能仅凭文档承诺原始重建与冻结建模矩阵逐字节一致。默认验证检查的是既有 `data/manifest.sha256` 与可复现模型指标。详见 `../data_snapshot/DATA_README.md`。
 
 ## 交付物
 

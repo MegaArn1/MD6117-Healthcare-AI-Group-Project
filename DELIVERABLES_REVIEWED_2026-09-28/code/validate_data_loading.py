@@ -12,7 +12,7 @@ from pathlib import Path
 # Add experiment directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.data import load_data, get_split, get_feature_names
+from data import load_data, get_split, get_feature_names
 import pandas as pd
 import numpy as np
 
@@ -88,22 +88,12 @@ def main():
         else:
             print(f"   ✓ {split_name}: {len(feature_cols)} features")
     
-    # Check SAPS-I and SOFA -1 sentinel counts
-    print("\n6. Checking SAPS-I and SOFA -1 sentinel counts...")
-    
-    # Check in unimputed data
-    if "SAPS-I" in X_unimputed.columns:
-        saps_minus_one_count = (X_unimputed["SAPS-I"] == -1).sum()
-        print(f"   • SAPS-I = -1: {saps_minus_one_count} records ({saps_minus_one_count/len(X_unimputed)*100:.2f}%)")
-    else:
-        print("   • SAPS-I column not found in unimputed data")
-    
-    if "SOFA" in X_unimputed.columns:
-        sofa_minus_one_count = (X_unimputed["SOFA"] == -1).sum()
-        print(f"   • SOFA = -1: {sofa_minus_one_count} records ({sofa_minus_one_count/len(X_unimputed)*100:.2f}%)")
-    else:
-        print("   • SOFA column not found in unimputed data")
-    
+    print("\n6. Checking bedside-score availability (scores must never enter X)...")
+    for score in ["saps_i", "sofa"]:
+        assert score not in X_unimputed.columns
+        assert labels_df[score].isna().equals(labels_df[f"{score}_available"].eq(0))
+        print(f"   {score}: {labels_df[score].isna().sum()} unavailable scores")
+
     # Summary statistics
     print("\n7. Summary statistics:")
     print(f"   • Total records: {len(labels_df)}")

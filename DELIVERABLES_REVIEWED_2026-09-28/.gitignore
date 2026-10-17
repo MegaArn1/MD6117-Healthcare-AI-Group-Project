@@ -1,0 +1,12 @@
+# Generated execution outputs and local environments
+artifacts/
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+release/
+release.zip
+.env
+.env.*
+*.log

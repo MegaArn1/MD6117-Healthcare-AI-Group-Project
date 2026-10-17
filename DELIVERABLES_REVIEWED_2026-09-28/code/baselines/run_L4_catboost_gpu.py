@@ -24,13 +24,13 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.utils import check_random_state
 from catboost import CatBoostClassifier, Pool
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-RESULTS_DIR   = Path(__file__).parent.parent / 'results'
-MODELS_DIR    = Path(__file__).parent.parent / 'models'
+RESULTS_DIR   = Path(__file__).resolve().parents[2] / "results"
+MODELS_DIR    = Path(__file__).resolve().parents[2] / "models"
 CHECKPOINT    = RESULTS_DIR / 'L4_catboost_search_checkpoint.json'
 LOG_FILE      = RESULTS_DIR / 'L4_catboost_training.log'
 MODELS_DIR.mkdir(exist_ok=True)

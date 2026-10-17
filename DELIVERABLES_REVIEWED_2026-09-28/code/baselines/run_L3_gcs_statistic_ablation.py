@@ -13,11 +13,11 @@ from pathlib import Path
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import get_split
 from metrics import compute_metrics
 
-R = Path(__file__).parent.parent / 'results'
+R = Path(__file__).resolve().parents[2] / "results"
 l3 = json.load(open(R / 'L3_logistic_regression_8features.json'))
 orig = l3['features']
 Xtr, ytr = get_split('train'); Xva, yva = get_split('validation')

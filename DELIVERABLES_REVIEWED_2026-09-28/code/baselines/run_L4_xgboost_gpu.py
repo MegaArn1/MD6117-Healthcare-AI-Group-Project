@@ -17,7 +17,7 @@ from pathlib import Path
 from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
 import xgboost as xgb
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics
 
@@ -26,8 +26,8 @@ print("L4 XGBoost Training (GPU)")
 print("="*60)
 
 # Paths
-RESULTS_DIR = Path(__file__).parent.parent / 'results'
-MODELS_DIR = Path(__file__).parent.parent / 'models'
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
+MODELS_DIR = Path(__file__).resolve().parents[2] / "models"
 MODELS_DIR.mkdir(exist_ok=True)
 
 start_time = time.time()

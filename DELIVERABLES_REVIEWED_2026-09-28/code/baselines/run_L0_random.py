@@ -11,8 +11,8 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.data import get_split
-from src.metrics import compute_metrics, bootstrap_ci
+from data import get_split
+from metrics import compute_metrics, bootstrap_ci
 
 
 def main():
@@ -69,7 +69,7 @@ def main():
     }
     
     # Save results
-    results_dir = Path(__file__).resolve().parents[1] / "results"
+    results_dir = Path(__file__).resolve().parents[2] / "results"
     results_dir.mkdir(exist_ok=True)
     results_path = results_dir / "L0_random_baseline.json"
     

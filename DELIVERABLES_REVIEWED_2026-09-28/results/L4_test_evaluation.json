@@ -27,8 +27,8 @@
   "vs_l3_comparison": {
     "l3_auroc": 0.741673181369322,
     "l3_auroc_ci": [
-      0.7075301390717577,
-      0.741673181369322
+      0.7075,
+      0.774
     ],
     "l4_auroc": 0.884880060895326,
     "l4_auroc_ci": [
@@ -38,11 +38,13 @@
     "improvement_absolute": 0.14320687952600397,
     "improvement_relative_pct": 19.30862314066779,
     "ci_overlap": false,
-    "statistically_significant": true
+    "comparison_method": "Descriptive marginal CI overlap; no paired hypothesis test was performed."
   },
   "literature_target_achieved": true,
   "literature_target_range": [
     0.83,
     0.86
-  ]
+  ],
+  "_repository_review_2026_10_17": "Corrected stale nested L3 CI from the canonical L3 record and removed unsupported significance label. L4 test metrics, predictions and threshold are unchanged.",
+  "_legacy_target_note": "Legacy literature_target fields denote the original planning target only; no verified literature superiority claim."
 }

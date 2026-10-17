@@ -14,12 +14,12 @@ import pandas as pd
 from pathlib import Path
 import xgboost as xgb
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics, find_threshold_for_recall, min_se_ppv
 
-R = Path(__file__).parent.parent / 'results'
-M = Path(__file__).parent.parent / 'models'
+R = Path(__file__).resolve().parents[2] / "results"
+M = Path(__file__).resolve().parents[2] / "models"
 
 print("="*70)
 print("L4 Challenge Metric (min(Se,PPV)) Operating Point Analysis")
@@ -111,5 +111,5 @@ output = {
 }
 
 json.dump(output, open(R / 'L4_challenge_metric_validation.json', 'w'), indent=2)
-print(f"\nSaved -> {R.relative_to(Path.cwd())}/L4_challenge_metric_validation.json")
+print(f"\nSaved -> {R.relative_to(Path(__file__).resolve().parents[2])}/L4_challenge_metric_validation.json")
 print("="*70)

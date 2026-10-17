@@ -54,7 +54,7 @@ def compute_metrics(y_true, y_score, threshold=None):
     # If threshold provided, compute threshold-based metrics
     if threshold is not None:
         y_pred = (y_score >= threshold).astype(int)
-        tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+        tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
 
         # Sensitivity (recall, true positive rate)
         sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0.0
@@ -180,7 +180,7 @@ def find_threshold_for_recall(y_true, y_score, target_recall=0.80):
 
     # precision_recall_curve returns (n_thresholds + 1) values for precision/recall
     # and n_thresholds values for thresholds. The last precision/recall values
-    # correspond to threshold = 0 (all predicted as positive).
+    # are the terminal precision=1, recall=0 point with no matching threshold.
     # We need to align them properly.
 
     # Find thresholds where recall >= target_recall
@@ -221,7 +221,7 @@ def min_se_ppv(y_true, y_pred):
     y_true = np.asarray(y_true)
     y_pred = np.asarray(y_pred)
 
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
 
     # Sensitivity (recall)
     sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0.0

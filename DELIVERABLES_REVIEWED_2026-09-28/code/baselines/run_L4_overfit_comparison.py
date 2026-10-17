@@ -15,12 +15,12 @@ from pathlib import Path
 import xgboost as xgb
 from catboost import CatBoostClassifier
 
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics
 
-R = Path(__file__).parent.parent / 'results'
-M = Path(__file__).parent.parent / 'models'
+R = Path(__file__).resolve().parents[2] / "results"
+M = Path(__file__).resolve().parents[2] / "models"
 
 labels, X, _ = load_data()
 df = labels.merge(X, on='RecordID', validate='one_to_one')

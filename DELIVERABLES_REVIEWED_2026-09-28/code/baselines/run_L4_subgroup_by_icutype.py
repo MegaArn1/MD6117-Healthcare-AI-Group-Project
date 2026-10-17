@@ -11,11 +11,11 @@ import sys, json
 import numpy as np
 from pathlib import Path
 import xgboost as xgb
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics, bootstrap_ci
 
-R = Path(__file__).parent.parent / 'results'; M = Path(__file__).parent.parent / 'models'
+R = Path(__file__).resolve().parents[2] / "results"; M = Path(__file__).resolve().parents[2] / "models"
 labels, X, _ = load_data()
 te = labels[labels['split'] == 'test'].merge(X, on='RecordID', validate='one_to_one')
 feat = [c for c in X.columns if c != 'RecordID']

@@ -22,7 +22,7 @@ cohort those patients are in fact HIGHER risk (SAPS-I -1 rows: 20.7% mortality v
 baseline. We therefore emit NaN plus an explicit availability flag and leave the
 evaluation policy to the caller. See experiment/README.md for the recommendation.
 
-Run:  python experiment/src/make_labels_and_baselines.py
+Run:  python code/make_labels_and_baselines.py
 """
 from __future__ import annotations
 
@@ -30,10 +30,10 @@ from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 OUTCOMES = ROOT / "release" / "outcomes.csv"
-LABELS = ROOT / "experiment" / "data" / "labels_and_splits.csv"
-TARGET = ROOT / "experiment" / "data" / "labels_and_baselines.csv"
+LABELS = ROOT / "data" / "labels_and_splits.csv"
+TARGET = ROOT / "data" / "labels_and_baselines.csv"
 
 FORBIDDEN = {"Length_of_stay", "Survival"}
 

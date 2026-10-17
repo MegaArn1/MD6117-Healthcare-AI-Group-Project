@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data, get_split
 from metrics import compute_metrics, find_threshold_for_recall, min_se_ppv
 
@@ -325,7 +325,7 @@ def main():
         }
     }
     
-    output_path = Path(__file__).parent.parent / 'results' / 'L3_threshold_analysis.json'
+    output_path = Path(__file__).resolve().parents[2] / "results" / 'L3_threshold_analysis.json'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)

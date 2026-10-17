@@ -1,11 +1,11 @@
 """Data loading utilities for In-hospital Death modelling experiments.
 
 This module provides clean access to the frozen 1,474-feature snapshot and the
-three-way split. All paths are relative to experiment/data/, the byte-identical
+three-way split. All paths are relative to the package data/ directory, the byte-identical
 frozen snapshot taken from preprocessing/outputs/ on 2026-09-21.
 
 Usage:
-    from src.data import load_data, get_split, get_feature_names
+    from data import load_data, get_split, get_feature_names
     
     labels_df, X_unimputed, X_imputed_splits = load_data()
     X_train, y_train = get_split('train')
@@ -18,8 +18,8 @@ from typing import Literal
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "experiment" / "data"
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "data"
 
 SplitName = Literal["train", "validation", "test"]
 
@@ -85,20 +85,13 @@ def get_split(split_name: SplitName) -> tuple[pd.DataFrame, pd.Series]:
     record_ids = X["RecordID"]
     X = X.drop(columns=["RecordID"])
     
-    split_labels = labels_df[labels_df["split"] == split_name].copy()
-    split_labels = split_labels.merge(
-        pd.DataFrame({"RecordID": record_ids}),
-        on="RecordID", how="right", validate="one_to_one"
-    )
-    
-    if len(split_labels) != len(X):
-        raise AssertionError(
-            f"label/feature length mismatch for {split_name}: "
-            f"{len(split_labels)} labels vs {len(X)} feature rows"
-        )
-    
-    y = split_labels["In-hospital_death"]
-    
+    if not record_ids.is_unique or not labels_df["RecordID"].is_unique:
+        raise ValueError("RecordID must be unique in labels and features")
+    split_labels = labels_df.loc[labels_df["split"].eq(split_name)].set_index("RecordID")
+    if set(record_ids) != set(split_labels.index):
+        raise ValueError(f"label/feature RecordID mismatch for {split_name}")
+    y = split_labels.loc[record_ids, "In-hospital_death"].reset_index(drop=True)
+
     return X, y
 
 

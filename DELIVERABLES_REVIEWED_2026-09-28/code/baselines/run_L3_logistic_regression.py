@@ -17,7 +17,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import roc_auc_score, average_precision_score
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data, get_split
 from metrics import compute_metrics, bootstrap_ci, find_threshold_for_recall
 
@@ -145,9 +145,9 @@ def main():
         if X_train_sel[feat].isna().any():
             median_val = X_train_sel[feat].median()
             imputation_values[feat] = median_val
-            X_train_sel[feat].fillna(median_val, inplace=True)
-            X_val_sel[feat].fillna(median_val, inplace=True)
-            X_test_sel[feat].fillna(median_val, inplace=True)
+            X_train_sel[feat] = X_train_sel[feat].fillna(median_val)
+            X_val_sel[feat] = X_val_sel[feat].fillna(median_val)
+            X_test_sel[feat] = X_test_sel[feat].fillna(median_val)
             print(f"  {feat}: imputed with {median_val:.2f}")
     print()
     
@@ -224,8 +224,8 @@ def main():
     print("Computing bootstrap 95% confidence intervals (1000 resamples)...")
     auroc_ci = bootstrap_ci(y_test, y_score_test, lambda yt, ys: roc_auc_score(yt, ys), n_bootstrap=1000)
     auprc_ci = bootstrap_ci(y_test, y_score_test, lambda yt, ys: average_precision_score(yt, ys), n_bootstrap=1000)
-    print(f"  AUROC 95% CI: [{auroc_ci[0]:.4f}, {auroc_ci[1]:.4f}]")
-    print(f"  AUPRC 95% CI: [{auprc_ci[0]:.4f}, {auprc_ci[1]:.4f}]")
+    print(f"  AUROC 95% CI: [{auroc_ci[1]:.4f}, {auroc_ci[2]:.4f}]")
+    print(f"  AUPRC 95% CI: [{auprc_ci[1]:.4f}, {auprc_ci[2]:.4f}]")
     print()
     
     # Apply threshold (from validation) to test set
@@ -268,16 +268,16 @@ def main():
         'test_samples': int(len(y_test)),
         'prevalence': float(y_test.mean()),
         'auroc': float(test_metrics['auroc']),
-        'auroc_ci': [float(auroc_ci[0]), float(auroc_ci[1])],
+        'auroc_ci': [float(auroc_ci[1]), float(auroc_ci[2])],
         'auprc': float(test_metrics['auprc']),
-        'auprc_ci': [float(auprc_ci[0]), float(auprc_ci[1])],
+        'auprc_ci': [float(auprc_ci[1]), float(auprc_ci[2])],
         'sensitivity': float(test_threshold_metrics['sensitivity']),
         'ppv': float(test_threshold_metrics['ppv']),
         'specificity': float(test_threshold_metrics['specificity']),
         'min_se_ppv': float(min_se_ppv)
     }
     
-    output_path = Path(__file__).parent.parent / 'results' / 'L3_logistic_regression_8features.json'
+    output_path = Path(__file__).resolve().parents[2] / "results" / 'L3_logistic_regression_8features.json'
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, 'w') as f:
         json.dump(results, f, indent=2)

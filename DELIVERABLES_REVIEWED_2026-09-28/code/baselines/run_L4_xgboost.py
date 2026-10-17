@@ -3,7 +3,7 @@ Stage 4: L4 Baseline - XGBoost with Full Feature Set (1,474 features)
 
 Native NaN handling, scale_pos_weight for class imbalance.
 Hyperparameter search on train+validation combined.
-Target: AUROC 0.83-0.86 (literature level).
+Historical planning target: AUROC 0.83-0.86; not an external benchmark comparison.
 """
 
 import sys
@@ -18,7 +18,7 @@ from sklearn.metrics import make_scorer
 import xgboost as xgb
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data
 from metrics import compute_metrics, bootstrap_ci
 
@@ -192,7 +192,7 @@ def main():
     print()
     
     # Save model
-    model_path = Path(__file__).parent.parent / 'results' / 'L4_xgboost_model.pkl'
+    model_path = Path(__file__).resolve().parents[2] / "results" / 'L4_xgboost_model.pkl'
     model_path.parent.mkdir(parents=True, exist_ok=True)
     
     with open(model_path, 'wb') as f:
@@ -243,7 +243,7 @@ def main():
         'model_path': str(model_path),
     }
     
-    results_path = Path(__file__).parent.parent / 'results' / 'L4_xgboost_training.json'
+    results_path = Path(__file__).resolve().parents[2] / "results" / 'L4_xgboost_training.json'
     with open(results_path, 'w') as f:
         json.dump(results, f, indent=2)
     

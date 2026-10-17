@@ -101,8 +101,8 @@ def analyze_clinical_score(df, score_col, available_col, label_col):
 
 def main():
     # Paths
-    data_dir = Path(__file__).parent.parent / "data"
-    results_dir = Path(__file__).parent.parent / "results"
+    data_dir = Path(__file__).resolve().parents[2] / "data"
+    results_dir = Path(__file__).resolve().parents[2] / "results"
     results_dir.mkdir(exist_ok=True)
     
     labels_file = data_dir / "labels_and_baselines.csv"

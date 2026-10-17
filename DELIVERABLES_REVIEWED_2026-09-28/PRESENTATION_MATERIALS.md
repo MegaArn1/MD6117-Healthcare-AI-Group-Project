@@ -1,4 +1,6 @@
-# Presentation Materials
+# Mortality presentation materials
+
+This file describes the reviewed **11,833-stay XGBoost** experiment. Task numbers and the mortality result differ in the later combined presentation; do not mix them. See `In_Hospital_Death.ipynb` for executed reproduction and `GAI_DECLARATION.md` for AI disclosure.
 
 Every number below is copied from Table 1 or a named file in `results/`. Do not use numbers from any file in `trash_bin/`.
 
@@ -38,9 +40,9 @@ Test set n = 1,775, prevalence 0.144. Se/PPV/Sp at the validation recall-0.80 th
 | 100 | 0.861 | 99.0% |
 | 1,474 | 0.869 | 100% |
 
-Message: fifty features carry nearly everything. Breadth, not depth.
+Message: validation AUROC is 0.857 with 50 features versus 0.869 in the full-feature ablation; a compact model deserves independent follow-up.
 
-### GCS: which statistic? (single-variable AUROC, train + validation)
+### GCS: which statistic? (observed-only single-variable AUROC, train + validation, n=9,907)
 
 | Statistic | AUROC |
 |---|---|
@@ -48,7 +50,7 @@ Message: fifty features carry nearly everything. Breadth, not depth.
 | median | 0.722 |
 | **min (what SOFA uses)** | **0.589** |
 
-Message: minimum GCS saturates on sedation and procedures. Last GCS reads the patient after those effects clear.
+Message: minimum GCS is less discriminative here; sedation is one unverified explanation. Sedation and documentation may contribute; medication data are unavailable.
 
 ### Top SHAP features (test set)
 
@@ -75,7 +77,7 @@ Flags 29% of patients; 38.7% of flagged die (base rate 14.4%, 2.7× enrichment).
 
 ### Calibration and subgroups
 
-Brier 0.086. Reliability curve is on the diagonal up to ~0.35 predicted, over-confident above that. Figure: `results/figures/L4_calibration_curve.png`.
+Brier 0.086; reliability is broadly better below ~0.35 predicted risk and over-confident at higher risks. This is internal evaluation. Figure: `results/figures/L4_calibration_curve.png`.
 
 | ICU type | n | Deaths | AUROC |
 |---|---|---|---|
@@ -107,7 +109,7 @@ Different test sets; approximate only. The metric-optimal point halves sensitivi
 
 ---
 
-## Suggested slide order (15 min)
+## Suggested mortality segment (8–10 min within the group’s 20-min maximum)
 
 1. Clinical question and why AUPRC (prevalence 0.144, missed death ≫ false alarm)
 2. Data: 11,833 stays, 1,474 features, one frozen split, test scored once
@@ -124,12 +126,12 @@ Different test sets; approximate only. The metric-optimal point halves sensitivi
 
 ## Questions to expect
 
-**"Why is your number higher than the papers?"** We train on 8,283 rows (all three challenge sets pooled) where most papers use set A's 4,000, and we use 1,474 windowed features. Say "consistent with or above published results", not "beats".
+**"How does this compare with published work?"** The pooled cohort, exclusions and fixed split differ from the official challenge. Direct numerical superiority is not established. Use the documented challenge context in `REFERENCES.md` and avoid unverified literature AUROC comparisons.
 
-**"Train AUROC is 1.0. Isn't that overfitting?"** It's capacity: boosted trees interpolate 8,283 rows. Generalisation is intact: validation 0.866, test 0.885, within noise of each other, and CatBoost shows the same train–val gap without interpolating. Early stopping was ablated and changes nothing.
+**"Train AUROC is 1.0. Isn't that overfitting?"** There is a substantial train–validation gap. Validation and test support internal performance, but do not rule out overfitting or selection optimism. The separate early-stopping ablation changed validation AUROC only slightly; external validation remains necessary.
 
-**"Is the complexity justified?"** Eight good features and logistic regression get 0.82. The full GBDT adds 0.064, statistically separated. Fifty features would get 98.6% of the way. So: yes for the benchmark, and the deployment version should be compact.
+**"Is the complexity justified?"** Eight good features and logistic regression get 0.82. The full GBDT adds 0.064, with non-overlapping marginal intervals; no paired significance test was performed. The saved feature-count ablation gives validation AUROC 0.857 with 50 features versus 0.869 with all features. So: yes for the benchmark, and the deployment version should be compact.
 
-**"How do you know GCS-last isn't leakage?"** Charting span is the same for deaths and survivors (44.5 vs 44.0 h); record-length proxies score AUROC 0.50–0.62 alone; there is a clinical reason (sedation depresses min but not last). Also: we found it with a train+validation screen, not by looking at test.
+**"How do you know GCS-last isn't leakage?"** Inputs are restricted to the pre-48h window and the statistic was selected on training/validation data. Similar charting spans and modest single-variable proxy performance are limited checks; they do not prove absence of leakage. Sedation and documentation remain unmeasured influences.
 
-**"Why not deep learning?"** Published LSTM/attention results on this data are 0.85–0.87. GBDT on engineered features is already there, trains in minutes, and explains itself with SHAP.
+**"Why not deep learning?"** GBDT is a practical tabular-data baseline and permits SHAP interpretation. Deep sequence models were not tested, so we make no direct performance claim against them.

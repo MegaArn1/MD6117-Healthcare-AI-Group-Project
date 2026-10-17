@@ -1,19 +1,22 @@
-name: ml_healthcare_gpu
+name: md6117_mortality
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.11
   - pip
-  - numpy=1.26
-  - pandas=2.1
-  - scikit-learn=1.3
-  - matplotlib=3.8
-  - seaborn=0.13
-  - jupyter
   - pip:
-      - xgboost>=2.0.0  # GPU support via pip
-      - lightgbm>=4.0.0  # GPU support
-      - shap>=0.44.0
-      - joblib
-      - torch
+      - numpy==1.26.4
+      - pandas==2.1.4
+      - scipy==1.11.4
+      - scikit-learn==1.2.2
+      - xgboost==3.2.0
+      - catboost==1.2.10
+      - matplotlib==3.8.0
+      - seaborn==0.12.2
+      - shap==0.49.1
+      - joblib==1.3.2
+      - nbformat==5.9.2
+      - nbclient==0.8.0
+      - nbconvert==7.10.0
+      - ipykernel==6.28.0
+      - notebook>=7,<8

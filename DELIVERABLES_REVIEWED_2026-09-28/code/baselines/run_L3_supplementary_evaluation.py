@@ -17,12 +17,12 @@ from sklearn.preprocessing import StandardScaler
 from scipy import stats
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from data import load_data, get_split
 from metrics import compute_metrics, bootstrap_ci
 
-DATA_DIR = Path(__file__).parent.parent / 'data'
-RESULTS_DIR = Path(__file__).parent.parent / 'results'
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
 
 # Load L3 configuration
 with open(RESULTS_DIR / 'L3_logistic_regression_8features.json') as f:

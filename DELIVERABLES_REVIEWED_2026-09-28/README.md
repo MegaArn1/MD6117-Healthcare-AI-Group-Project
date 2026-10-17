@@ -1,112 +1,87 @@
-# In-Hospital Mortality Prediction — Deliverables
+# In-hospital Death — MD6117 project code
 
-MD6117 Machine Learning for Healthcare AI, group project, task 1 (院内死亡预测), modelling half.
-PhysioNet/CinC 2012 data, 11,833 ICU stays, 1,474 features, one frozen 70/15/15 split.
+## Declaration on Use of GAI
 
-**Headline**: XGBoost reaches test AUROC **0.885 [0.865, 0.903]**, AUPRC **0.591 [0.535, 0.649]**; the bedside scores reach 0.640 (SAPS-I) and 0.623 (SOFA); an eight-feature logistic regression reaches 0.821. Every number in these documents is read from a file in `results/`.
+OpenAI Codex assisted with the 17 October 2026 repository audit, notebook, reproducibility fixes and documentation. See [GAI_DECLARATION.md](GAI_DECLARATION.md) and [AI_USE_LOG.md](AI_USE_LOG.md) for verified use and corrections. Earlier individual AI use must be confirmed by the team; it is not inferred or invented here.
 
----
+## Scope and dataset
 
-## Read in this order
+This repository contains **only in-hospital mortality prediction**. It preserves the reviewed 11,833-stay experiment: 1,474 features, XGBoost test AUROC **0.885** (95% CI 0.865–0.903), AUPRC **0.591** (0.535–0.649). The other group task and the later combined 12,000-stay CatBoost experiment are outside this package. Task numbers changed in later presentation documents; use the clinical task name to identify this experiment.
 
-| | File | What it is | Time |
-|---|---|---|---|
-| 1 | `FINAL_REPORT.md` | The report. Ladder table, model, calibration, subgroups, SHAP, three patient cases, limitations. | 25 min |
-| 2 | `PRESENTATION_MATERIALS.md` | Slide-ready tables, figure list, slide order, expected questions. | 10 min |
-| 3 | `data_snapshot/DATA_README.md` | Where the data lives, what the 1,474 columns are, the traps. | 5 min |
-| 4 | `process_docs/` | Stage-by-stage working notes with self-critique and lineage. Read if you want to know *why* a decision was made. | 1–2 h |
+Source: PhysioNet / Computing in Cardiology Challenge 2012, sets A/B/C pooled. This historical cohort excludes 167 negative-length-of-stay records and contains 1,707 deaths (14.4%). Predict `In-hospital_death` at hour 48 from observations in **[0, 48 h)**. This is in-hospital death, including deaths after ICU discharge.
 
-That is the whole reading list. Everything else here is code, results, or models.
+The bundled `data/` snapshot supplies all inputs for model replay. `data/manifest.sha256` records its hashes. The split is fixed by stay, stratified by outcome, seed 20260907: train 8,283 / validation 1,775 / test 1,775. Repeat admissions cannot be grouped because patient IDs are unavailable.
 
----
+## Install and run
 
-## Folder layout
-
-```
-DELIVERABLES/
-├── README.md                     this file
-├── FINAL_REPORT.md               the report
-├── PRESENTATION_MATERIALS.md     slides and Q&A
-│
-├── code/
-│   ├── src/data.py               loader: splits, feature list, labels
-│   ├── src/metrics.py            AUROC/AUPRC, bootstrap CI, threshold at recall 0.80, min(Se,PPV)
-│   ├── baselines/                one script per rung and per analysis (24 files, list below)
-│   ├── environment_gpu.yml       conda spec (xgboost 3.2, catboost 1.2, sklearn 1.2, pandas 2.1, numpy 1.26)
-│   └── requirements.txt          pip freeze of the environment used
-│
-├── models/
-│   ├── L4_xgboost_best.json      selected model (1.9 MB)
-│   └── L4_catboost_best.cbm      runner-up, kept for the cross-model SHAP comparison (1.0 MB)
-│
-├── results/                      24 JSON files + figures/ (list below)
-├── data_snapshot/DATA_README.md  pointer to experiment/data/; no data copied here
-├── process_docs/                 stage1, stage2 v2, stage3 v2
-└── trash_bin/                    superseded documents; see WHY_THESE_ARE_HERE.md inside. Do not cite.
-```
-
----
-
-## What each script does and what it writes
-
-Ladder rungs (each scores test once):
-
-| Script | Writes | Rung |
-|---|---|---|
-| `run_L0_random.py` | `L0_random_baseline.json` | L0 |
-| `run_L1_static_age_years.py`, `run_L1_gcs__0_48h__min.py`, `run_L1_bun__0_48h__max.py` | `L1_*.json` | L1 |
-| `run_L2_clinical_scores.py` | `L2_clinical_scores_analysis.json` | L2, incl. the `-1` sentinel analysis |
-| `run_L3_logistic_regression.py` | `L3_logistic_regression_8features.json` | L3 |
-| `run_L3_threshold_analysis.py` | `L3_threshold_analysis.json` | L3 + L2 operating points |
-| `run_L3_revised_test_evaluation.py` | `L3_revised_test_evaluation.json` | L3-revised (pre-declared, scored once) |
-| `run_L4_xgboost_gpu.py` | `L4_xgboost_training.json`, `models/L4_xgboost_best.json` | L4 training, GPU, 13 min |
-| `run_L4_catboost_gpu.py` | `L4_catboost_training.json`, `models/L4_catboost_best.cbm` | L4 training, GPU, 89 min |
-| `run_L4_model_selection.py` | `L4_model_selection.json` | picks XGBoost on validation AUROC |
-| `run_L4_test_evaluation_gpu.py` | `L4_test_evaluation.json` | **L4 test numbers (the headline)** |
-
-Analyses on frozen predictions or on train + validation only (no new test looks):
-
-| Script | Writes | Answers |
-|---|---|---|
-| `run_L3_supplementary_evaluation.py` | `L3_supplementary_evaluation.json` | L3 train/val/test, fair subset vs L2 |
-| `run_L3_gcs_statistic_ablation.py` | `L3_gcs_statistic_ablation.json` | GCS min → last, urine min → total (validation) |
-| `run_L4_supplementary_evaluation.py` | `L4_supplementary_evaluation.json` | L4 vs SAPS-I/SOFA on their subsets; SHAP re-categorised |
-| `run_L4_overfit_comparison.py` | `L4_overfit_comparison.json` | train/val for XGBoost and CatBoost |
-| `run_L4_xgboost_es_ablation.py` | `L4_xgboost_es_ablation.json` | does early stopping change anything (no) |
-| `run_L4_feature_count_ablation.py` | `L4_feature_count_ablation.json` | top-k features, validation AUROC |
-| `run_L4_shap_analysis_gpu.py` | `L4_feature_importance.json`, `figures/L4_shap_summary.png` | global SHAP on test |
-| `run_L4_shap_validation_comparison.py` | `L4_shap_validation_comparison.json` | XGBoost vs CatBoost SHAP agreement |
-| `run_L4_calibration_and_subgroup.py` | `L4_calibration_and_subgroup.json`, `figures/L4_calibration_curve.png` | Brier, reliability curve, L0/L1 min(Se,PPV) |
-| `run_L4_subgroup_by_icutype.py` | `L4_subgroup_by_icutype.json` | AUROC by all four ICU types |
-| `run_L4_challenge_metric_validation.py` | `L4_challenge_metric_validation.json` | min(Se,PPV) optimal point, validation only |
-| `run_L4_case_examples.py` | `L4_case_examples.json`, `figures/L4_shap_waterfall_{TP,FP,FN}_*.png` | three patient explanations |
-
-Also in `results/`: `L4_catboost_search_checkpoint.json` (hyperparameter search log, resumable).
-
----
-
-## Rules this work followed
-
-- Test set scored once per declared model. L4: once. L3: once. L3-revised: once, with its feature set fixed in the script before first run. Every hyperparameter, threshold and feature choice came from train + validation.
-- Calibration, subgroups, SHAP and case explanations were computed on the frozen test prediction vector after all choices were made, and were listed before being run.
-- Feature matrix frozen 2026-09-21; not modified.
-- SAPS-I and SOFA are evaluated on the patients for whom they exist (n = 1,728 / 1,733). The model is scored on those same subsets for the head-to-head.
-- One shared `metrics.py`; AUPRC via `average_precision_score`, never trapezoidal.
-
-## Models
-
-XGBoost was selected (validation AUROC 0.866 vs CatBoost 0.860). LightGBM was attempted but had no GPU support on the training machine and produced no result; it is not part of the ladder.
-
-## Not in scope
-
-Task 2 (prolonged length of stay) and its two open questions (LOS threshold, competing-risk handling) belong to the other half of the group. Both halves use the same split and the same `metrics.py`.
-
-## Reproduce
+Use **Python 3.11**, at least 4 GB of free RAM and a CPU. No GitHub token, raw-data download or GPU is needed for default execution. From this directory:
 
 ```bash
-conda env create -f code/environment_gpu.yml && conda activate ml_healthcare_gpu
-cd ../experiment            # scripts expect experiment/ as working directory
-python baselines/run_L4_test_evaluation_gpu.py     # re-derives the headline from the saved model, ~1 min
+python -m venv .venv
+# Linux / macOS
+source .venv/bin/activate
+# Windows PowerShell instead: .venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python tools/verify_submission.py
+python tools/execute_notebook.py
 ```
 
-Full retraining needs a GPU: `run_L4_xgboost_gpu.py` (13 min), `run_L4_catboost_gpu.py` (89 min).
+The final command executes and saves [In_Hospital_Death.ipynb](In_Hospital_Death.ipynb) with the active Python interpreter. To use Jupyter interactively:
+
+```bash
+python -m ipykernel install --user --name md6117_mortality --display-name "MD6117 Mortality"
+python -m notebook In_Hospital_Death.ipynb
+```
+
+Select **MD6117 Mortality**, then Restart Kernel and Run All. The committed notebook contains executed outputs for reading on GitHub.
+
+Default Run All verifies data hashes, performs training-only EDA, fits both logistic pipelines, loads the reviewed XGBoost, recomputes test metrics and 1,000-resample confidence intervals, and draws ROC/PR, calibration and subgroup summaries. It displays retained SHAP plots. Expect minutes on a typical CPU; hardware affects runtime.
+
+New outputs go to `artifacts/notebook/`: fitted L3 pipelines, tables, plots and `verification.json`. Historical `results/`, `data/` and L4 models are preserved. The replay asserts that the principal metrics match the reviewed records. It is a repeatability check of fixed choices, not a new independent test.
+
+## Models, development and evaluation
+
+The ladder is random → age/GCS/BUN alone → available SAPS-I/SOFA → eight-feature logistic → revised logistic (GCS-last and urine-total) → XGBoost. L4 was selected over CatBoost by **validation AUROC**, following 50-candidate, 5-fold training CV searches. AUPRC is also reported because prevalence is low. The original selection objective was AUROC; it is not changed retrospectively.
+
+The notebook's `RETRAIN_L4=False` and `RUN_FULL_SEARCH=False` switches expose an optional CPU refit and full training-only XGBoost search. New fits write separate artifacts and report validation results. GPU training entry points remain available:
+
+```bash
+python code/baselines/run_L4_xgboost_gpu.py
+python code/baselines/run_L4_catboost_gpu.py
+```
+
+These legacy scripts overwrite their named training/model outputs when intentionally rerun. GPU searches originally took about 13 and 89 minutes. GPU-enabled XGBoost/CatBoost and compatible NVIDIA drivers are needed for the recorded GPU training route. LightGBM was attempted but yielded no result and is not required.
+
+Thresholds target recall 0.80 on validation only. Reported test sensitivity is 0.785, PPV 0.387 and specificity 0.791. Test denominators differ for bedside scores; the notebook also compares L4 on exactly the score-available subsets. AUPRC uses `average_precision_score`; bootstrap resampling is stratified, seed 42. No paired significance test was performed.
+
+## Files and preprocessing
+
+| Path | Purpose |
+|---|---|
+| `In_Hospital_Death.ipynb` | Executable analysis, training, plots and discussion |
+| `preprocessing/mortality_data_preprocessing.ipynb` | Separate executed QA notebook |
+| `preprocessing/` | Raw preprocessing code/configuration, tests and copied outputs |
+| `code/data.py`, `code/metrics.py` | Package-relative loader and shared metrics |
+| `code/baselines/` | Historical model and analysis entry points |
+| `models/` | Reviewed XGBoost JSON and CatBoost CBM |
+| `results/` | Reviewed metrics, ablations and SHAP figures |
+| `data/`, `data_snapshot/DATA_README.md` | Frozen inputs and provenance limitations |
+| `FINAL_REPORT.md`, `PRESENTATION_MATERIALS.md` | Mortality report and slide material |
+| `SUBMISSION_CHECKLIST.md`, `AI_USE_LOG.md` | Rubric mapping and correction record |
+| `tools/` | Notebook execution/generation and submission checks |
+| `project_context/`, `process_docs/` | Historical notes; not the current run instructions |
+
+Raw preprocessing is optional and needs the course `release/README.md`, `release/outcomes.csv` and `release/icu_records/*.csv` placed inside this package. See [preprocessing/README.md](preprocessing/README.md). The raw release is not bundled. Rebuilt features must be audited separately; do not overwrite the frozen modelling snapshot. The supplied code/configuration and historical cleaning descriptions have a documented provenance discrepancy.
+
+## Checks and interpretation
+
+```bash
+python -m unittest discover -s tests -v
+python -m unittest discover -s preprocessing/tests -v
+python code/validate_data_loading.py
+python tools/verify_submission.py --require-executed
+```
+
+This is single-cohort internal validation. Calibration is imperfect at high risk; GCS may reflect sedation/charting; external validation, patient-level grouping, fairness audits and clinical utility are untested. It is a research experiment.
+
+For the final NTU-Learn submission, combine this mortality component with the separately maintained other task and PowerPoint, then package once as `<Group_Number>.zip`. This repository is the mortality component, not the complete two-task group submission.

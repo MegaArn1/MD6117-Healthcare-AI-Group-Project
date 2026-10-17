@@ -11,7 +11,7 @@ print("="*60)
 print("L4 Model Selection")
 print("="*60)
 
-RESULTS_DIR = Path(__file__).parent.parent / 'results'
+RESULTS_DIR = Path(__file__).resolve().parents[2] / "results"
 
 # Load whichever result files exist
 candidates = {}
