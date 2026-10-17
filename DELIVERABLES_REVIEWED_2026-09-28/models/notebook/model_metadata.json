@@ -1,0 +1,68 @@
+{
+  "source_notebook": "In_Hospital_Death.ipynb",
+  "target": "In-hospital_death",
+  "input": "engineered per-stay features before imputation; use each bundle feature list",
+  "environment": {
+    "python": "3.11.7",
+    "numpy": "1.26.4",
+    "pandas": "2.1.4",
+    "scikit-learn": "1.2.2",
+    "xgboost": "3.2.0",
+    "catboost": "1.2.10",
+    "scipy": "1.11.4",
+    "matplotlib": "3.8.0",
+    "joblib": "1.3.2"
+  },
+  "models": {
+    "L3": {
+      "file": "models/notebook/L3_pipeline.joblib",
+      "features": [
+        "bun__0_48h__max",
+        "static_age_years",
+        "gcs__0_48h__min",
+        "urine__0_48h__min",
+        "lactate__0_48h__max",
+        "platelets__0_48h__min",
+        "creatinine__0_48h__max",
+        "lactate__0_48h__measured"
+      ],
+      "threshold": 0.42035608650468786,
+      "threshold_rule": "recall 0.80 on the frozen validation split",
+      "pipeline_steps": [
+        "train-median imputer",
+        "train-fitted StandardScaler",
+        "L2 LogisticRegression(C=1, class_weight=balanced)"
+      ],
+      "training_rows": 8283,
+      "training_deaths": 1195,
+      "split_seed": 20260907,
+      "estimator_seed": 42,
+      "validation_predictions_match_after_reload": true
+    },
+    "L3-revised": {
+      "file": "models/notebook/L3-revised_pipeline.joblib",
+      "features": [
+        "bun__0_48h__max",
+        "static_age_years",
+        "gcs__0_48h__last",
+        "urine__0_48h__total",
+        "lactate__0_48h__max",
+        "platelets__0_48h__min",
+        "creatinine__0_48h__max",
+        "lactate__0_48h__measured"
+      ],
+      "threshold": 0.39509570244249015,
+      "threshold_rule": "recall 0.80 on the frozen validation split",
+      "pipeline_steps": [
+        "train-median imputer",
+        "train-fitted StandardScaler",
+        "L2 LogisticRegression(C=1, class_weight=balanced)"
+      ],
+      "training_rows": 8283,
+      "training_deaths": 1195,
+      "split_seed": 20260907,
+      "estimator_seed": 42,
+      "validation_predictions_match_after_reload": true
+    }
+  }
+}

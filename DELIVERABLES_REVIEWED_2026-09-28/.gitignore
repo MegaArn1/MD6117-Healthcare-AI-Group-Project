@@ -1,4 +1,5 @@
-# Generated execution outputs and local environments
+# Optional new development runs and local environments
+# Reviewed notebook exports under results/ and models/ are tracked.
 artifacts/
 .venv/
 __pycache__/

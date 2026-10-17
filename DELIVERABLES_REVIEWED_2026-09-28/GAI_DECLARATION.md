@@ -5,7 +5,7 @@
 
 ## Confirmed use
 
-OpenAI Codex was used during this repository revision to inspect the supplied project files and assessment requirements; identify reproducibility defects; draft an annotated modelling/EDA notebook; repair package-relative paths and bootstrap interval handling; draft documentation and this log; and execute automated validation against the existing artifacts.
+OpenAI Codex was used during this repository revision to inspect the supplied project files and assessment requirements; identify reproducibility defects; draft an annotated modelling/EDA notebook; repair package-relative paths and bootstrap interval handling; draft documentation and this log; organise standalone figures, result tables and L3 model exports; and execute automated validation against the existing artifacts.
 
 AI assistance did not create the clinical observations, outcome labels, cohort split, or original reviewed XGBoost/CatBoost models. New notebook tables and figures are calculated from the submitted data and frozen model; the two inexpensive logistic recipes are refitted from training rows. Existing SHAP figures are identified as retained artifacts, rather than presented as freshly computed.
 

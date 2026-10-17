@@ -5,6 +5,7 @@
 **/.venv/
 **/.ipynb_checkpoints/
 **/.pytest_cache/
+# Optional development runs; published notebook exports in results/ and models/ are tracked.
 **/artifacts/
 .env
 .env.*

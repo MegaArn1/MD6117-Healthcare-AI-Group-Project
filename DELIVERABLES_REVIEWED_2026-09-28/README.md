@@ -37,13 +37,22 @@ Select **MD6117 Mortality**, then Restart Kernel and Run All. The committed note
 
 Default Run All verifies data hashes, performs training-only EDA, fits both logistic pipelines, loads the reviewed XGBoost, recomputes test metrics and 1,000-resample confidence intervals, and draws ROC/PR, calibration and subgroup summaries. It displays retained SHAP plots. Expect minutes on a typical CPU; hardware affects runtime.
 
-New outputs go to `artifacts/notebook/`: fitted L3 pipelines, tables, plots and `verification.json`. Historical `results/`, `data/` and L4 models are preserved. The replay asserts that the principal metrics match the reviewed records. It is a repeatability check of fixed choices, not a new independent test.
+The [saved output index](results/notebook/README.md) provides figures, downloadable tables and verification records without opening the notebook:
+
+| Output | Published location |
+|---|---|
+| Five PNG figures | `results/figures/notebook/` |
+| Four CSV result tables | `results/notebook/tables/` |
+| Replay report and output SHA-256 manifest | `results/notebook/verification.json`, `manifest.json` |
+| Two fitted L3 pipelines and metadata | `models/notebook/` |
+
+Default Run All refreshes these committed outputs. The replay asserts that the principal metrics match the reviewed records and that saved L3 pipelines reproduce their validation predictions after reloading. It is a repeatability check of fixed choices, not a new independent test.
 
 ## Models, development and evaluation
 
 The ladder is random → age/GCS/BUN alone → available SAPS-I/SOFA → eight-feature logistic → revised logistic (GCS-last and urine-total) → XGBoost. L4 was selected over CatBoost by **validation AUROC**, following 50-candidate, 5-fold training CV searches. AUPRC is also reported because prevalence is low. The original selection objective was AUROC; it is not changed retrospectively.
 
-The notebook's `RETRAIN_L4=False` and `RUN_FULL_SEARCH=False` switches expose an optional CPU refit and full training-only XGBoost search. New fits write separate artifacts and report validation results. GPU training entry points remain available:
+The notebook's `RETRAIN_L4=False` and `RUN_FULL_SEARCH=False` switches expose an optional CPU refit and full training-only XGBoost search. Optional new fits write to the Git-ignored `artifacts/notebook/` directory and report validation results. GPU training entry points remain available:
 
 ```bash
 python code/baselines/run_L4_xgboost_gpu.py
@@ -63,8 +72,8 @@ Thresholds target recall 0.80 on validation only. Reported test sensitivity is 0
 | `preprocessing/` | Raw preprocessing code/configuration, tests and copied outputs |
 | `code/data.py`, `code/metrics.py` | Package-relative loader and shared metrics |
 | `code/baselines/` | Historical model and analysis entry points |
-| `models/` | Reviewed XGBoost JSON and CatBoost CBM |
-| `results/` | Reviewed metrics, ablations and SHAP figures |
+| `models/` | Reviewed L4 models; `notebook/` contains refitted L3 bundles and metadata |
+| `results/` | Historical metrics plus indexed notebook tables, figures and verification |
 | `data/`, `data_snapshot/DATA_README.md` | Frozen inputs and provenance limitations |
 | `FINAL_REPORT.md`, `PRESENTATION_MATERIALS.md` | Mortality report and slide material |
 | `SUBMISSION_CHECKLIST.md`, `AI_USE_LOG.md` | Rubric mapping and correction record |

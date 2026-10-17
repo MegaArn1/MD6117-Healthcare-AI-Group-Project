@@ -1,0 +1,76 @@
+{
+  "status": "PASS",
+  "cohort": 11833,
+  "features": 1474,
+  "test_n": 1775,
+  "snapshot_files_verified": 16,
+  "bootstrap_resamples": 1000,
+  "threshold": 0.10822707414627075,
+  "l4_test_metrics": {
+    "auprc": 0.5911575114623904,
+    "auroc": 0.884880060895326,
+    "sensitivity": 0.78515625,
+    "ppv": 0.3872832369942196,
+    "specificity": 0.7906517445687953,
+    "min_se_ppv": 0.3872832369942196
+  },
+  "brier": 0.08626776029039518,
+  "reviewed_metric_checks": [
+    {
+      "model": "L0 random",
+      "matches_reviewed": true
+    },
+    {
+      "model": "L1 age",
+      "matches_reviewed": true
+    },
+    {
+      "model": "L1 GCS min",
+      "matches_reviewed": true
+    },
+    {
+      "model": "L1 BUN max",
+      "matches_reviewed": true
+    },
+    {
+      "model": "L3",
+      "matches_reviewed": true
+    },
+    {
+      "model": "L3-revised",
+      "matches_reviewed": true
+    },
+    {
+      "model": "L4 XGBoost",
+      "matches_reviewed": true
+    }
+  ],
+  "environment": {
+    "python": "3.11.7",
+    "numpy": "1.26.4",
+    "pandas": "2.1.4",
+    "scikit-learn": "1.2.2",
+    "xgboost": "3.2.0",
+    "catboost": "1.2.10",
+    "scipy": "1.11.4",
+    "matplotlib": "3.8.0",
+    "joblib": "1.3.2"
+  },
+  "full_search_executed": false,
+  "l4_retraining_executed": false,
+  "published_output_paths": [
+    "results/figures/notebook/eda_measurement_coverage.png",
+    "results/figures/notebook/eda_outcomes_training.png",
+    "results/figures/notebook/roc_pr_test.png",
+    "results/figures/notebook/calibration_test.png",
+    "results/figures/notebook/feature_count_validation.png",
+    "results/notebook/tables/gcs_statistic_development.csv",
+    "results/notebook/tables/ladder_test.csv",
+    "results/notebook/tables/icu_subgroups.csv",
+    "results/notebook/tables/reviewed_metric_checks.csv",
+    "models/notebook/L3_pipeline.joblib",
+    "models/notebook/L3-revised_pipeline.joblib",
+    "models/notebook/model_metadata.json",
+    "results/notebook/verification.json"
+  ]
+}

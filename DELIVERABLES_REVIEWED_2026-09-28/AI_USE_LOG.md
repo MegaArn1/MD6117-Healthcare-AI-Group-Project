@@ -7,9 +7,10 @@ This log implements the code-repository requirement on page 5 and the “AI Use 
 | Date | Tool | Purpose | Verification / output |
 |---|---|---|---|
 | 2026-10-17 | OpenAI Codex | Read the local rubric and inspect the mortality repository | `SUBMISSION_CHECKLIST.md`; scoped to reviewed 11,833-stay experiment |
-| 2026-10-17 | OpenAI Codex | Draft executable annotated EDA/modelling notebook and reproduction helpers | `In_Hospital_Death.ipynb`; full default execution; generated `artifacts/notebook/verification.json` |
+| 2026-10-17 | OpenAI Codex | Draft executable annotated EDA/modelling notebook and reproduction helpers | `In_Hospital_Death.ipynb`; full default execution; published `results/notebook/verification.json` |
 | 2026-10-17 | OpenAI Codex | Repair paths, bootstrap indexing and misleading interpretation | Changes in `code/`, report and presentation notes; regression checks |
 | 2026-10-17 | OpenAI Codex | Draft declaration, usage log, README and artifact guide | Claims cross-checked against files, manifest and executed metrics |
+| 2026-10-17 | OpenAI Codex | Organise and publish standalone notebook outputs | Five PNGs, four CSVs, verification report and two L3 bundles; model metadata, output index and hash manifest; default notebook rerun and saved-model reload checks |
 
 ## Errors found and corrections
 

@@ -20,4 +20,6 @@ python tools/execute_notebook.py
 
 Default execution runs on CPU with bundled processed data and saved models. It refits the fixed logistic baselines and reproduces XGBoost AUROC **0.884880**, AUPRC **0.591158**. See [verification results](DELIVERABLES_REVIEWED_2026-09-28/REPRODUCIBILITY_CHECKS.md) for checks and limitations.
 
+Browse the [standalone output gallery and result tables](DELIVERABLES_REVIEWED_2026-09-28/results/notebook/README.md) or the [trained model inventory](DELIVERABLES_REVIEWED_2026-09-28/models/README.md) without opening the notebook. Published exports include their source, feature/threshold metadata and SHA-256 checks.
+
 The final NTU-Learn submission still needs assembly with the separately maintained task and PowerPoint into one `<Group_Number>.zip`.

@@ -38,7 +38,9 @@ threshold targeting recall 0.80.
 Run all cells in the pinned Python 3.11 environment. Default execution refits the inexpensive
 L3 models and replays the saved L4 model on CPU; it does not redo the GPU search.
 Set `RETRAIN_L4` or `RUN_FULL_SEARCH` below only to run new development fits.
-New outputs go to `artifacts/notebook/`, leaving `data/`, reviewed `results/` and L4 models intact.
+Default outputs are published under `results/notebook/`, `results/figures/notebook/` and
+`models/notebook/`. Optional search/refit outputs use the ignored `artifacts/notebook/` directory.
+Historical L4 results and the frozen input snapshot retain their existing paths.
 ''')
 code('''
 from pathlib import Path
@@ -69,8 +71,13 @@ SEED = 42
 N_BOOTSTRAP = 1000
 RETRAIN_L4 = False
 RUN_FULL_SEARCH = False
-OUT = ROOT / 'artifacts' / 'notebook'
-OUT.mkdir(parents=True, exist_ok=True)
+RESULT_DIR = ROOT / 'results' / 'notebook'
+TABLE_DIR = RESULT_DIR / 'tables'
+FIGURE_DIR = ROOT / 'results' / 'figures' / 'notebook'
+MODEL_DIR = ROOT / 'models' / 'notebook'
+SCRATCH_DIR = ROOT / 'artifacts' / 'notebook'
+for directory in [RESULT_DIR, TABLE_DIR, FIGURE_DIR, MODEL_DIR]:
+    directory.mkdir(parents=True, exist_ok=True)
 plt.rcParams.update({'figure.dpi': 110, 'axes.grid': True, 'grid.alpha': 0.2})
 pd.set_option('display.max_columns', 14)
 versions = {'python': platform.python_version(), **{p: importlib.metadata.version(p) for p in
@@ -150,7 +157,7 @@ coverage = pd.Series({f.split('__')[0]: train[f].mean()
 fig, ax = plt.subplots(figsize=(8, 8))
 coverage.plot.barh(ax=ax, color='#267b9b')
 ax.set(xlabel='Fraction of training stays with a valid measurement', title='Measurement coverage, [0, 48 h)')
-fig.tight_layout(); fig.savefig(OUT / 'eda_measurement_coverage.png'); plt.show()
+fig.tight_layout(); fig.savefig(FIGURE_DIR / 'eda_measurement_coverage.png'); plt.show()
 display(train[['static_age_years','gcs__0_48h__last','bun__0_48h__max',
                'urine__0_48h__total','lactate__0_48h__max']].describe().round(2))
 ''')
@@ -161,7 +168,7 @@ for ax, f in zip(axes, ['static_age_years', 'gcs__0_48h__last', 'bun__0_48h__max
         v = train.loc[y_train == outcome, f].dropna()
         ax.hist(v, bins=24, density=True, alpha=0.5, label=name, color=color)
     ax.set(title=f, ylabel='Density'); ax.legend()
-fig.tight_layout(); fig.savefig(OUT / 'eda_outcomes_training.png'); plt.show()
+fig.tight_layout(); fig.savefig(FIGURE_DIR / 'eda_outcomes_training.png'); plt.show()
 missing = train.isna().mean().sort_values(ascending=False)
 display(missing.head(12).rename('training missing fraction').to_frame())
 ''')
@@ -220,7 +227,7 @@ code('''
 L3 = ['bun__0_48h__max','static_age_years','gcs__0_48h__min','urine__0_48h__min',
       'lactate__0_48h__max','platelets__0_48h__min','creatinine__0_48h__max','lactate__0_48h__measured']
 L3_REVISED = [f.replace('gcs__0_48h__min','gcs__0_48h__last').replace('urine__0_48h__min','urine__0_48h__total') for f in L3]
-logistic_models = {}; validation_rows = []
+logistic_models = {}; validation_rows = []; model_metadata = {}
 for name, cols in [('L3', L3), ('L3-revised', L3_REVISED)]:
     pipe = Pipeline([('imputer', SimpleImputer(strategy='median')), ('scale', StandardScaler()),
                      ('model', LogisticRegression(C=1, class_weight='balanced', max_iter=1000, random_state=SEED))])
@@ -230,8 +237,23 @@ for name, cols in [('L3', L3), ('L3-revised', L3_REVISED)]:
     logistic_models[name] = (cols, pipe, threshold)
     validation_rows.append({'model': name, 'threshold': threshold,
         **compute_metrics(y_by_split['validation'], p_val, threshold)})
+    model_file = MODEL_DIR / f'{name}_pipeline.joblib'
     joblib.dump({'features': cols, 'pipeline': pipe, 'threshold': threshold,
-                 'purpose': 'CPU reproduction of the reviewed L3 recipe'}, OUT / f'{name}_pipeline.joblib')
+                 'purpose': 'CPU reproduction of the reviewed L3 recipe'}, model_file)
+    # Reload the exported bundle and check its predictions before publishing it.
+    restored = joblib.load(model_file)
+    assert np.array_equal(p_val, restored['pipeline'].predict_proba(
+        raw_by_split['validation'][restored['features']])[:, 1])
+    model_metadata[name] = {
+        'file': model_file.relative_to(ROOT).as_posix(),
+        'features': cols, 'threshold': float(threshold),
+        'threshold_rule': 'recall 0.80 on the frozen validation split',
+        'pipeline_steps': ['train-median imputer', 'train-fitted StandardScaler',
+                           'L2 LogisticRegression(C=1, class_weight=balanced)'],
+        'training_rows': int(len(y_train)), 'training_deaths': int(y_train.sum()),
+        'split_seed': 20260907, 'estimator_seed': SEED,
+        'validation_predictions_match_after_reload': True,
+    }
 display(pd.DataFrame(validation_rows).set_index('model'))
 ''')
 code('''
@@ -249,7 +271,7 @@ for statistic in ['min', 'last', 'median', 'mean', 'max', 'slope_per_hour', 'del
         'train-median-imputed AUROC': roc_auc_score(y_dev, -values)})
 gcs_screen = pd.DataFrame(gcs_rows).set_index('statistic').sort_values('observed-only AUROC', ascending=False)
 display(gcs_screen)
-gcs_screen.to_csv(OUT / 'gcs_statistic_development.csv')
+gcs_screen.to_csv(TABLE_DIR / 'gcs_statistic_development.csv')
 ''')
 md('''
 The observed-only screen reproduces the historical last-GCS AUROC 0.757 and minimum-GCS 0.589 (n=9,907). Median-imputed values include all 10,058 development stays and have different AUROCs; both denominators are explicit. The last GCS separates outcomes better than the minimum. Sedation
@@ -300,7 +322,8 @@ if RUN_FULL_SEARCH:
     search = RandomizedSearchCV(estimator, search_space, n_iter=50, scoring='roc_auc',
         cv=StratifiedKFold(5, shuffle=True, random_state=SEED), random_state=SEED, n_jobs=1)
     search.fit(train, y_train)
-    pd.DataFrame(search.cv_results_).to_csv(OUT / 'new_xgboost_search.csv', index=False)
+    SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(search.cv_results_).to_csv(SCRATCH_DIR / 'new_xgboost_search.csv', index=False)
     display(pd.DataFrame(search.cv_results_).sort_values('rank_test_score').head())
 else:
     print('Full search skipped; retained historical training records are displayed above.')
@@ -312,7 +335,8 @@ if RETRAIN_L4:
     development_model.fit(train, y_train)
     development_val = development_model.predict_proba(raw_by_split['validation'])[:,1]
     display(pd.Series(compute_metrics(y_by_split['validation'], development_val)))
-    development_model.save_model(OUT / 'new_L4_xgboost_cpu.json')
+    SCRATCH_DIR.mkdir(parents=True, exist_ok=True)
+    development_model.save_model(SCRATCH_DIR / 'new_L4_xgboost_cpu.json')
 else:
     print('L4 training skipped; default evaluation uses the reviewed saved model.')
 ''')
@@ -377,7 +401,7 @@ for name, (cols, pipe, threshold) in logistic_models.items():
 predictions['L4 XGBoost'] = p_test_l4
 evaluate('L4 XGBoost', y_test, p_test_l4, threshold_l4, reference['test_performance'])
 ladder = pd.DataFrame(rows).set_index('model')
-ladder.to_csv(OUT / 'ladder_test.csv')
+ladder.to_csv(TABLE_DIR / 'ladder_test.csv')
 assert all(r['matches_reviewed'] for r in review_checks), review_checks
 display(ladder.round(4))
 display(pd.DataFrame(review_checks))
@@ -410,7 +434,7 @@ axes[1].axhline(y_test.mean(),color='k',ls='--',label='Prevalence')
 axes[0].set(xlabel='False positive rate',ylabel='Sensitivity',title='ROC, frozen test')
 axes[1].set(xlabel='Recall',ylabel='Precision',title='Precision–recall, frozen test')
 for ax in axes: ax.legend()
-fig.tight_layout();fig.savefig(OUT/'roc_pr_test.png');plt.show()
+fig.tight_layout();fig.savefig(FIGURE_DIR/'roc_pr_test.png');plt.show()
 ''')
 md('''
 ## 8. Clinical operating point, calibration and subgroups
@@ -431,7 +455,7 @@ print(f'Brier {brier:.4f}; constant training-prevalence reference {brier_score_l
 frac,mean=calibration_curve(y_test,p_test_l4,n_bins=10)
 fig,ax=plt.subplots(figsize=(5,4));ax.plot([0,1],[0,1],'k--');ax.plot(mean,frac,'o-')
 ax.set(xlabel='Mean predicted risk',ylabel='Observed mortality',title='L4 test reliability curve')
-fig.tight_layout();fig.savefig(OUT/'calibration_test.png');plt.show()
+fig.tight_layout();fig.savefig(FIGURE_DIR/'calibration_test.png');plt.show()
 ''')
 code('''
 subgroups=[]
@@ -442,7 +466,7 @@ for n,name in [(1,'Coronary'),(2,'Cardiac surgery recovery'),(3,'Medical'),(4,'S
     subgroups.append({'ICU':name,'n':int(mask.sum()),'deaths':int(y_test[mask].sum()),'AUROC':a,'low':lo,'high':hi})
 subgroup_table=pd.DataFrame(subgroups)
 assert subgroup_table.n.sum()==len(y_test)
-display(subgroup_table.round(4));subgroup_table.to_csv(OUT/'icu_subgroups.csv',index=False)
+display(subgroup_table.round(4));subgroup_table.to_csv(TABLE_DIR/'icu_subgroups.csv',index=False)
 ''')
 md('''
 Calibration is broadly closer to the diagonal at lower risks and over-confident in the
@@ -484,7 +508,7 @@ for ax, metric in zip(axes, ['val_auroc','val_auprc']):
     ax.plot(ablation_table.k, ablation_table[metric], 'o-')
     ax.set(xscale='log', xlabel='Number of train-ranked features', ylabel=metric,
            title='Retained validation ablation')
-fig.tight_layout(); fig.savefig(OUT/'feature_count_validation.png'); plt.show()
+fig.tight_layout(); fig.savefig(FIGURE_DIR/'feature_count_validation.png'); plt.show()
 display(pd.DataFrame({k:v for k,v in read_result('L3_gcs_statistic_ablation.json').items() if k != '_note'}).T)
 ''')
 md('''
@@ -509,18 +533,46 @@ and independently evaluated compact models. This submission is research evidence
 a clinical deployment.
 
 ## 11. Outputs and verification
-Tables and newly rendered plots are saved to `artifacts/notebook/`, along with the two
-fitted logistic pipelines. The reviewed tree models remain under `models/`. Replaying
-these fixed choices is a reproducibility check, not a fresh estimate after development.
+Tables and verification records are saved to `results/notebook/`; the five newly rendered
+plots to `results/figures/notebook/`; fitted logistic pipelines and their feature/threshold
+metadata to `models/notebook/`. The [output index](results/notebook/README.md) links all
+published files. The output manifest records their SHA-256 hashes. The reviewed tree
+models remain at their original paths under `models/`. Replaying these fixed choices is
+a reproducibility check, not a fresh estimate after development.
+
+A default rerun refreshes these committed reproduction outputs. Optional new development
+fits stay in the ignored `artifacts/notebook/` directory until deliberately reviewed.
 ''')
 code('''
-pd.DataFrame(review_checks).to_csv(OUT/'reviewed_metric_checks.csv',index=False)
+pd.DataFrame(review_checks).to_csv(TABLE_DIR/'reviewed_metric_checks.csv',index=False)
 summary={'status':'PASS','cohort':len(labels),'features':len(features),'test_n':len(y_test),
     'snapshot_files_verified':len(checks),'bootstrap_resamples':N_BOOTSTRAP,
     'threshold':float(threshold_l4),'l4_test_metrics':{k:float(v) for k,v in l4_metrics.items()},
     'brier':float(brier),'reviewed_metric_checks':review_checks,'environment':versions,
     'full_search_executed':RUN_FULL_SEARCH,'l4_retraining_executed':RETRAIN_L4}
-(OUT/'verification.json').write_text(json.dumps(summary,indent=2))
+(MODEL_DIR/'model_metadata.json').write_text(json.dumps({
+    'source_notebook': 'In_Hospital_Death.ipynb', 'target': 'In-hospital_death',
+    'input': 'engineered per-stay features before imputation; use each bundle feature list',
+    'environment': versions, 'models': model_metadata,
+}, indent=2) + chr(10))
+published_files = [
+    *[FIGURE_DIR/name for name in ['eda_measurement_coverage.png', 'eda_outcomes_training.png',
+        'roc_pr_test.png', 'calibration_test.png', 'feature_count_validation.png']],
+    *[TABLE_DIR/name for name in ['gcs_statistic_development.csv', 'ladder_test.csv',
+        'icu_subgroups.csv', 'reviewed_metric_checks.csv']],
+    MODEL_DIR/'L3_pipeline.joblib', MODEL_DIR/'L3-revised_pipeline.joblib',
+    MODEL_DIR/'model_metadata.json', RESULT_DIR/'verification.json',
+]
+summary['published_output_paths'] = [p.relative_to(ROOT).as_posix() for p in published_files]
+(RESULT_DIR/'verification.json').write_text(json.dumps(summary,indent=2) + chr(10))
+output_manifest = {
+    'source_notebook': 'In_Hospital_Death.ipynb',
+    'description': 'Default CPU replay outputs; historical L4 artifacts and frozen inputs are separate.',
+    'files': {p.relative_to(ROOT).as_posix(): {
+        'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()
+    } for p in published_files},
+}
+(RESULT_DIR/'manifest.json').write_text(json.dumps(output_manifest,indent=2) + chr(10))
 display(pd.Series({k:v for k,v in summary.items() if k not in ['environment','reviewed_metric_checks','l4_test_metrics']}))
 print('PASS: snapshot verified, declared model recipes reproduced, tables and plots saved.')
 ''')

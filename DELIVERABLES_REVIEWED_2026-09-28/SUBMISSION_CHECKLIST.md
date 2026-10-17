@@ -8,7 +8,7 @@ Source: `Group_Presentation/MD6117 Project Assessment Rubrics STUDENT.pdf`, page
 | Executable, annotated Python Jupyter notebook | `In_Hospital_Death.ipynb` | EDA, preprocessing audit, feature choice, logistic fits, optional L4 search/refit, saved L4 replay |
 | Task definition, tables and plots | Notebook §§1–9 | Mortality only; other task deliberately excluded |
 | Analysis and discussion of results/plots | Notebook interpretation cells and §10; `FINAL_REPORT.md` | Includes cohort/split, clinical trade-offs, calibration, uncertainty and limitations |
-| Trained models | `models/L4_xgboost_best.json`, `models/L4_catboost_best.cbm` | Original selected model and validation comparator; notebook saves fitted L3 pipelines separately |
+| Trained models | `models/L4_xgboost_best.json`, `models/L4_catboost_best.cbm` | Original selected model and validation comparator; fitted L3 bundles and feature/threshold metadata are committed under `models/notebook/` |
 | Preprocessing files | `preprocessing/` and its QA notebook; `data/` snapshot | Raw rebuild optional; raw release not included; provenance discrepancy disclosed |
 | README ≤1,500 words | `README.md` | Dataset, scope, environment, commands, output paths and run modes |
 | AI use log, including incorrect outputs | `AI_USE_LOG.md` | Confirmed tool use plus traceable errors and fixes; no invented historical attribution |
@@ -36,7 +36,7 @@ python tools/execute_notebook.py
 python tools/verify_submission.py --require-executed
 ```
 
-The verifier checks required files, README length, frozen hashes, notebook syntax and saved successful outputs. Notebook execution asserts the principal reviewed metrics. Full GPU retraining and raw-data preprocessing are not claimed as part of default verification.
+The verifier checks required files, README length, frozen input and published output hashes, CSV totals, documentation links, notebook syntax and saved successful outputs. Notebook execution asserts the principal reviewed metrics. Full GPU retraining and raw-data preprocessing are not claimed as part of default verification.
 
 ## Assembly outside this mortality repository
 

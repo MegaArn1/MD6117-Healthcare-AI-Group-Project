@@ -101,6 +101,8 @@ Different test sets; approximate only. The metric-optimal point halves sensitivi
 
 ## Figures to show
 
+The [saved notebook output index](results/notebook/README.md) includes previews and standalone PNG/CSV downloads. Additional plots for the data, model comparison and feature-count slides are `results/figures/notebook/eda_measurement_coverage.png`, `eda_outcomes_training.png`, `roc_pr_test.png` and `feature_count_validation.png`. `results/figures/notebook/calibration_test.png` is a freshly rendered view of the same frozen calibration data.
+
 1. `results/figures/L4_shap_summary.png` — global importance, beeswarm.
 2. `results/figures/L4_shap_waterfall_TP_high_risk_died.png` — a correct high-risk call: last GCS 7, lactate 11.6, low urine, platelets 25. Every system says the same thing.
 3. `results/figures/L4_shap_waterfall_FP_high_risk_survived.png` — a false alarm: last GCS 6 dominates (+1.7 log-odds) in an 80-year-old with good urine output. Shows the GCS-last failure mode.

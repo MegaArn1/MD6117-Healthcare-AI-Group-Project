@@ -231,6 +231,6 @@ The model flags 519 patients (29%). Of those, 201 die: a 38.7% event rate agains
 
 ## 9. Reproducing this work
 
-See `README.md` for the portable environment and commands. Run `python tools/execute_notebook.py` from this package with Python 3.11 and `requirements.txt` installed. The notebook refits both fixed L3 recipes, loads `models/L4_xgboost_best.json`, verifies the reviewed metrics, and writes new tables/figures/pipelines into `artifacts/notebook/`.
+See `README.md` for the portable environment and commands. Run `python tools/execute_notebook.py` from this package with Python 3.11 and `requirements.txt` installed. The notebook refits both fixed L3 recipes, loads `models/L4_xgboost_best.json`, verifies the reviewed metrics, and writes published tables/checks to `results/notebook/`, figures to `results/figures/notebook/`, and L3 pipelines/metadata to `models/notebook/`. The output index is `results/notebook/README.md`; optional new development fits use `artifacts/notebook/`.
 
 Modules are `code/data.py` and `code/metrics.py`; historical entry points are under `code/baselines/`. All paths resolve inside this package. The data snapshot is `data/` and is checked against its SHA-256 manifest. Optional full training and raw preprocessing are documented separately; default execution does neither. The raw cleaning-policy discrepancy and unavailable historical GAI history are disclosed in `data_snapshot/DATA_README.md` and `GAI_DECLARATION.md`.

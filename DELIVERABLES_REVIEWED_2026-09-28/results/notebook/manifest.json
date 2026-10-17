@@ -1,0 +1,58 @@
+{
+  "source_notebook": "In_Hospital_Death.ipynb",
+  "description": "Default CPU replay outputs; historical L4 artifacts and frozen inputs are separate.",
+  "files": {
+    "results/figures/notebook/eda_measurement_coverage.png": {
+      "bytes": 68770,
+      "sha256": "0211127d79b1661b67db1fd3af9a0b845e0c730c354161dfd59cef784db81d5e"
+    },
+    "results/figures/notebook/eda_outcomes_training.png": {
+      "bytes": 43990,
+      "sha256": "64f91085e1a30ade21a9af11457786dc94b2596c301eff2a0f2072a394b2ed50"
+    },
+    "results/figures/notebook/roc_pr_test.png": {
+      "bytes": 85277,
+      "sha256": "a6d97cd0d1628739a1d5361a48c5dd94318fba3c4fdfd901fffe768eab5c59ac"
+    },
+    "results/figures/notebook/calibration_test.png": {
+      "bytes": 32956,
+      "sha256": "b95e9c5fbb6a21471386c4e74baa23a183725d66b6b883965c9bfa5b5572b068"
+    },
+    "results/figures/notebook/feature_count_validation.png": {
+      "bytes": 43560,
+      "sha256": "2a0098f8e63b23655055fe0df010f09ae0d7f46cc9ac4d25751ec54286f16857"
+    },
+    "results/notebook/tables/gcs_statistic_development.csv": {
+      "bytes": 414,
+      "sha256": "9b0a408f26006e65716f125a0f00579b5a0b97647ce4eaffb842cce881c558f3"
+    },
+    "results/notebook/tables/ladder_test.csv": {
+      "bytes": 1640,
+      "sha256": "3bfa47cf2da481f99c4f376b803aab6aa04893fcfc12da459a2a051ec513f1c2"
+    },
+    "results/notebook/tables/icu_subgroups.csv": {
+      "bytes": 334,
+      "sha256": "0b20b9362e8bbc6ad4ef0ed3872200b651fdf071b58a2f72f97b70a9a7df2fdc"
+    },
+    "results/notebook/tables/reviewed_metric_checks.csv": {
+      "bytes": 122,
+      "sha256": "836d851f6b08dd60fe35cf3a5ca47f2396e58d121586da74db667e2e112823ed"
+    },
+    "models/notebook/L3_pipeline.joblib": {
+      "bytes": 2699,
+      "sha256": "2fbba8f1d8759f5cd525ae8a20bf32748297e58bf16e7ce99c7bcab4b44f475f"
+    },
+    "models/notebook/L3-revised_pipeline.joblib": {
+      "bytes": 2699,
+      "sha256": "661e401032bedc70c4a5c80bdb4854ca777b405c9d8843243ea5141d3d2b4133"
+    },
+    "models/notebook/model_metadata.json": {
+      "bytes": 2045,
+      "sha256": "660c8ab938942a2b348bde20106045629e5ae4cf0facd8b2b3c393fb2e78f84f"
+    },
+    "results/notebook/verification.json": {
+      "bytes": 1995,
+      "sha256": "997fd033e197c9f449a925ee95e6b351e935ab2a33ac799c7567f8fc650f5a6d"
+    }
+  }
+}
