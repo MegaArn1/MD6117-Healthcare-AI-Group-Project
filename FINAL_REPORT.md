@@ -6,9 +6,9 @@
 **Date**: 2026-09-25
 **Scope**: In-hospital mortality only; this is the reviewed 11,833-stay XGBoost experiment. Preprocessing is in `preprocessing/README.md`. The later combined presentation uses different task numbers and a different mortality experiment.
 
-**Repository revision (2026-10-17):** Executable analysis is in `In_Hospital_Death.ipynb`; AI disclosure is in `GAI_DECLARATION.md`. Historical result values are preserved; interpretation and reproduction instructions below have been corrected.
+**Repository revision (2026-10-17):** Executable analysis is in `In_Hospital_Death.ipynb`; AI disclosure is in `docs/GAI_DECLARATION.md`. Historical result values are preserved; interpretation and reproduction instructions below have been corrected.
 
-Model results come from the named files under `results/`. The GCS univariate screen is reproduced in `In_Hospital_Death.ipynb`; external challenge context is referenced separately in `REFERENCES.md`.
+Model results come from the named files under `results/`. The GCS univariate screen is reproduced in `In_Hospital_Death.ipynb`; external challenge context is referenced separately in `docs/REFERENCES.md`.
 
 ---
 
@@ -70,7 +70,7 @@ Splits are 70/15/15, stratified by outcome, seed 20260907, fixed before any mode
 | **L3-revised** | **Logistic, 8 features (GCS-last, urine-total)** | 8 | **0.821 [0.793, 0.846]** | **0.500 [0.445, 0.556]** | 0.840 | 0.297 | 0.666 | 0.297 | 1,775 |
 | **L4** | **XGBoost, 1,474 features** | 1,474 | **0.885 [0.865, 0.903]** | **0.591 [0.535, 0.649]** | 0.785 | 0.387 | 0.791 | 0.387 | 1,775 |
 
-Sources: `L0_random_baseline.json`, `L1_*.json`, `L2_clinical_scores_analysis.json`, `L3_threshold_analysis.json`, `L3_logistic_regression_8features.json`, `L3_revised_test_evaluation.json`, `L4_test_evaluation.json`. Historical threshold gap-fill caveats are recorded in `AI_USE_LOG.md`.
+Sources: `L0_random_baseline.json`, `L1_*.json`, `L2_clinical_scores_analysis.json`, `L3_threshold_analysis.json`, `L3_logistic_regression_8features.json`, `L3_revised_test_evaluation.json`, `L4_test_evaluation.json`. Historical threshold gap-fill caveats are recorded in `docs/AI_USE_LOG.md`.
 
 **Reading the ladder.**
 - A single lab value (BUN max, 0.675) already matches or beats both bedside scores. The scores were designed for population stratification, not individual prediction, and each takes only a few dozen distinct values across 1,775 patients.
@@ -199,7 +199,7 @@ SHAP waterfalls on the test set for one correct high-risk call, one false alarm,
 
 ## 6. Challenge context and limits of comparison
 
-The PhysioNet/CinC 2012 challenge used a different data partition and min(Se, PPV) as its event-1 score. Its SAPS-I reference scored 0.313 and the best entry 0.535 on the official evaluation. Dataset and organiser references are listed in `REFERENCES.md`. Our pooled and re-split cohort is not a direct benchmark comparison; unsupported specific literature AUROC claims from earlier notes are not used here.
+The PhysioNet/CinC 2012 challenge used a different data partition and min(Se, PPV) as its event-1 score. Its SAPS-I reference scored 0.313 and the best entry 0.535 on the official evaluation. Dataset and organiser references are listed in `docs/REFERENCES.md`. Our pooled and re-split cohort is not a direct benchmark comparison; unsupported specific literature AUROC claims from earlier notes are not used here.
 
 Our test min(Se, PPV) is 0.387 at the validation recall-0.80 operating point. A separate validation-only sweep selects threshold 0.345 with min(Se, PPV) approximately 0.518 (Se and PPV about 0.52). This illustrates a sensitivity/precision trade-off, not a claim to beat the challenge. The test set was not re-thresholded for that objective. Source: `L4_challenge_metric_validation.json`.
 
@@ -233,4 +233,4 @@ The model flags 519 patients (29%). Of those, 201 die: a 38.7% event rate agains
 
 See `README.md` for the portable environment and commands. Run `python tools/execute_notebook.py` from this package with Python 3.11 and `requirements.txt` installed. The notebook refits both fixed L3 recipes, loads `models/L4_xgboost_best.json`, verifies the reviewed metrics, and writes published tables/checks to `results/notebook/`, figures to `results/figures/notebook/`, and L3 pipelines/metadata to `models/notebook/`. The output index is `results/notebook/README.md`; optional new development fits use `artifacts/notebook/`.
 
-Modules are `code/data.py` and `code/metrics.py`; historical entry points are under `code/baselines/`. All paths resolve inside this package. The data snapshot is `data/` and is checked against its SHA-256 manifest. Optional full training and raw preprocessing are documented separately; default execution does neither. The raw cleaning-policy discrepancy and unavailable historical GAI history are disclosed in `data_snapshot/DATA_README.md` and `GAI_DECLARATION.md`.
+Modules are `code/data.py` and `code/metrics.py`; historical entry points are under `code/baselines/`. All paths resolve inside this package. The data snapshot is `data/` and is checked against its SHA-256 manifest. Optional full training and raw preprocessing are documented separately; default execution does neither. The raw cleaning-policy discrepancy and unavailable historical GAI history are disclosed in `docs/DATA_README.md` and `docs/GAI_DECLARATION.md`.

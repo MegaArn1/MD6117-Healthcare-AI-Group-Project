@@ -1,11 +1,13 @@
-# Caches and generated local files
-**/__pycache__/
+# Optional new development runs and local environments
+# Reviewed notebook exports under results/ and models/ are tracked.
+artifacts/
+.venv/
+__pycache__/
 *.py[cod]
-*.log
-**/.venv/
-**/.ipynb_checkpoints/
-**/.pytest_cache/
-# Optional development runs; published notebook exports in results/ and models/ are tracked.
-**/artifacts/
+.ipynb_checkpoints/
+.pytest_cache/
+release/
+release.zip
 .env
 .env.*
+*.log

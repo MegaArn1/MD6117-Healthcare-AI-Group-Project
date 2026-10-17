@@ -13,11 +13,19 @@ import nbformat
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def check_relative_links(text, parent, label):
+    for link in re.findall(r'\]\(([^)]+)\)', text):
+        if '://' in link or link.startswith('#'):
+            continue
+        assert (parent/link.split('#')[0]).exists(), f'Broken link in {label}: {link}'
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--require-executed', action='store_true', help='Also require saved error-free outputs in both notebooks')
     args = parser.parse_args()
-    required = ['README.md','GAI_DECLARATION.md','AI_USE_LOG.md','SUBMISSION_CHECKLIST.md',
+    required = ['README.md','FINAL_REPORT.md','docs/README.md','docs/DATA_README.md',
+        'docs/PRESENTATION_MATERIALS.md','docs/REFERENCES.md','docs/REPRODUCIBILITY_CHECKS.md','docs/GAI_DECLARATION.md','docs/AI_USE_LOG.md','docs/SUBMISSION_CHECKLIST.md',
         'In_Hospital_Death.ipynb','requirements.txt','code/data.py','code/metrics.py',
         'models/L4_xgboost_best.json','models/L4_catboost_best.cbm',
         'preprocessing/mortality_preprocess.py','preprocessing/config.json',
@@ -52,16 +60,16 @@ def main():
             assert not any(o.output_type == 'error' for o in c.get('outputs',[])), f'Notebook error: {name}'
             if args.require_executed:
                 assert c.get('execution_count') is not None, f'Unexecuted cell in {name}'
+        for cell in nb.cells:
+            if cell.cell_type == 'markdown':
+                check_relative_links(cell.source, (ROOT/name).parent, name)
         print(f'PASS: {name}: {len(code_cells)} syntactically valid code cells' + (' with saved execution' if args.require_executed else ''))
-    # Validate active relative documentation links (historical notes have old source links).
-    for name in ['README.md','GAI_DECLARATION.md','AI_USE_LOG.md','SUBMISSION_CHECKLIST.md',
-                 'results/README.md','results/figures/README.md','results/notebook/README.md','models/README.md']:
-        document = ROOT/name
-        text = document.read_text()
-        for link in re.findall(r'\]\(([^)]+)\)',text):
-            if '://' in link or link.startswith('#'):
-                continue
-            assert (document.parent/link.split('#')[0]).exists(), f'Broken link in {name}: {link}'
+    # Current guides use the new document archive; historical quoted layouts are preserved.
+    documents = [ROOT/'README.md', ROOT/'FINAL_REPORT.md', *sorted((ROOT/'docs').glob('*.md')),
+                 ROOT/'preprocessing/README.md', ROOT/'models/README.md',
+                 *sorted((ROOT/'results').rglob('README.md'))]
+    for document in documents:
+        check_relative_links(document.read_text(), document.parent, document.relative_to(ROOT))
     print('PASS: active documentation links and Python syntax')
     manifest = json.loads((ROOT/'results/notebook/manifest.json').read_text())
     expected_files = {

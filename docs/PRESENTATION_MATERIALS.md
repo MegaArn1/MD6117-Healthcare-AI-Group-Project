@@ -1,6 +1,6 @@
 # Mortality presentation materials
 
-This file describes the reviewed **11,833-stay XGBoost** experiment. Task numbers and the mortality result differ in the later combined presentation; do not mix them. See `In_Hospital_Death.ipynb` for executed reproduction and `GAI_DECLARATION.md` for AI disclosure.
+This file describes the reviewed **11,833-stay XGBoost** experiment. Task numbers and the mortality result differ in the later combined presentation; do not mix them. See `../In_Hospital_Death.ipynb` for executed reproduction and `GAI_DECLARATION.md` for AI disclosure.
 
 Every number below is copied from Table 1 or a named file in `results/`. Do not use numbers from any file in `trash_bin/`.
 
@@ -101,7 +101,7 @@ Different test sets; approximate only. The metric-optimal point halves sensitivi
 
 ## Figures to show
 
-The [saved notebook output index](results/notebook/README.md) includes previews and standalone PNG/CSV downloads. Additional plots for the data, model comparison and feature-count slides are `results/figures/notebook/eda_measurement_coverage.png`, `eda_outcomes_training.png`, `roc_pr_test.png` and `feature_count_validation.png`. `results/figures/notebook/calibration_test.png` is a freshly rendered view of the same frozen calibration data.
+The [saved notebook output index](../results/notebook/README.md) includes previews and standalone PNG/CSV downloads. Additional plots for the data, model comparison and feature-count slides are `results/figures/notebook/eda_measurement_coverage.png`, `eda_outcomes_training.png`, `roc_pr_test.png` and `feature_count_validation.png`. `results/figures/notebook/calibration_test.png` is a freshly rendered view of the same frozen calibration data.
 
 1. `results/figures/L4_shap_summary.png` — global importance, beeswarm.
 2. `results/figures/L4_shap_waterfall_TP_high_risk_died.png` — a correct high-risk call: last GCS 7, lactate 11.6, low urine, platelets 25. Every system says the same thing.

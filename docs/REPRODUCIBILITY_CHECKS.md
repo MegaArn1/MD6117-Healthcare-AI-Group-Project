@@ -20,6 +20,7 @@ Scope: reviewed in-hospital mortality experiment, 11,833 stays, 1,474 features. 
 | L3 interval regression | Re-executed script uses bootstrap bounds, not point estimate as a bound |
 | Subgroup regression | Four one-hot masks cover all 1,775 test stays |
 | Submission verifier | Required artifacts, notebook syntax, saved execution, links and README word limit pass |
+| Repository layout | Main project files are at the GitHub root; supporting documents are in `docs/` and historical records in `docs/history/` |
 | Exported L3 pipeline reload | Both saved bundles reproduce their pre-save validation probabilities exactly |
 | Published output manifest | All 13 published data/figure/model files match their recorded SHA-256 hashes; CSV totals agree with replay report |
 
@@ -28,3 +29,5 @@ Execution environment: Python 3.11.7; NumPy 1.26.4; pandas 2.1.4; SciPy 1.11.4; 
 `tools/execute_notebook.py` uses the active interpreter through a temporary kernelspec. Default runs publish tables and verification records to `results/notebook/`, five figures to `results/figures/notebook/`, and fitted L3 bundles plus metadata to `models/notebook/`. These reviewed outputs and the executed notebook are committed. `results/notebook/manifest.json` records SHA-256 hashes for the 13 exported files. Only optional new search/refit outputs use the Git-ignored `artifacts/notebook/` directory. See the saved output index in `results/notebook/README.md`.
 
 Not executed in this revision: full GPU hyperparameter searches or a raw-to-feature rebuild. The original L4 models and frozen snapshot are preserved. The existing preprocessing QA notebook was checked for valid saved execution; its underlying outputs passed the separate regression/schema checks. Current cleaning-policy provenance and unavailable earlier individual AI-use history are disclosed, not silently assumed resolved.
+
+Root-layout verification: the notebook is executed directly from the flattened repository root. Active Markdown and notebook links, required document paths and both input/output manifests are checked after relocation. The archive retains historical content, so paths quoted inside `docs/history/` describe their original working layout.

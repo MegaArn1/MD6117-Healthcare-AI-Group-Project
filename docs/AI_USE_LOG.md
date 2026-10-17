@@ -11,6 +11,7 @@ This log implements the code-repository requirement on page 5 and the “AI Use 
 | 2026-10-17 | OpenAI Codex | Repair paths, bootstrap indexing and misleading interpretation | Changes in `code/`, report and presentation notes; regression checks |
 | 2026-10-17 | OpenAI Codex | Draft declaration, usage log, README and artifact guide | Claims cross-checked against files, manifest and executed metrics |
 | 2026-10-17 | OpenAI Codex | Organise and publish standalone notebook outputs | Five PNGs, four CSVs, verification report and two L3 bundles; model metadata, output index and hash manifest; default notebook rerun and saved-model reload checks |
+| 2026-10-17 | OpenAI Codex | Simplify the repository root and archive supporting documentation | Main project files promoted to the GitHub root; supporting documents in `docs/`, historical notes in `docs/history/`; README, notebook links and verification paths updated |
 
 ## Errors found and corrections
 

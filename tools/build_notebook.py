@@ -13,8 +13,8 @@ md('''
 OpenAI Codex assisted with the 17 October 2026 repository audit, executable notebook,
 path and bootstrap fixes, documentation and verification. Code, tables and figures below
 are executed against the submitted data and saved model. AI did not supply patient data
-or synthetic performance results. See [GAI_DECLARATION.md](GAI_DECLARATION.md) and
-[AI_USE_LOG.md](AI_USE_LOG.md) for scope, errors and corrections. Earlier tools and each
+or synthetic performance results. See [GAI_DECLARATION.md](docs/GAI_DECLARATION.md) and
+[AI_USE_LOG.md](docs/AI_USE_LOG.md) for scope, errors and corrections. Earlier tools and each
 member's use cannot be established from these files and require the team's factual declaration.
 
 This repository covers **in-hospital mortality only**. It preserves the reviewed
@@ -50,9 +50,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from IPython.display import display, Markdown, Image
 
-# Locate the submitted package from either the repository root or this folder.
+# Locate the project root from the current directory or an ancestor.
 HERE = Path.cwd().resolve()
-ROOT = next(p for p in [HERE, HERE / 'DELIVERABLES_REVIEWED_2026-09-28', *HERE.parents]
+ROOT = next(p for p in [HERE, *HERE.parents]
             if (p / 'data' / 'manifest.sha256').is_file())
 sys.path.insert(0, str(ROOT / 'code'))
 from data import load_data, get_split, get_feature_names
@@ -182,7 +182,7 @@ risk information, but overlapping distributions require multivariable modelling.
 The frozen feature dictionary contains window, statistic, unit and missingness semantics.
 The original configuration's generic outlier description conflicts with the supplied
 preprocessing code, which contains physiological bounds and pH/height corrections. We
-retain and verify the reviewed bytes; see the provenance limitation in `data_snapshot/DATA_README.md`.
+retain and verify the reviewed bytes; see the provenance limitation in `docs/DATA_README.md`.
 ''')
 md('''
 ## 4. Preprocessing and feature engineering
